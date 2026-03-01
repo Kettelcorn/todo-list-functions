@@ -1,5 +1,9 @@
 require('dotenv').config()
 
+function main() {
+    getData()
+}
+
 // Getting all tasks that have morning, afternoon, and evenining tags
 async function getData(){
     console.log(process.env.TEST_DATA_SOURCE)
@@ -41,8 +45,6 @@ async function getData(){
     console.log("Retrieved Checked Tasks")
     removeChecks(data)
 }
-
-getData()
 
 // Uncheck all checkboxes for filtered tasks
 async function removeChecks(tasks) {
@@ -99,3 +101,5 @@ async function hasMore(data){
         } 
     }
 }
+
+main()
