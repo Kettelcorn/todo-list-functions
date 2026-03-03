@@ -1,11 +1,12 @@
 require('dotenv').config()
 
-function main() {
-    getData()
+async function main() {
+    const filteredTasks = await getDailyTasks();
+    removeChecks(filteredTasks);
 }
 
 // Getting all tasks that have morning, afternoon, and evenining tags
-async function getData(){
+async function getDailyTasks(){
     let data_source = process.env.DATA_SOURCE;
     if (process.env.NODE_ENV == 'development') {
         data_source = process.env.TEST_DATA_SOURCE;
@@ -45,36 +46,21 @@ async function getData(){
     })
     });
     const data = await response.json();
-    removeChecks(data);
-}
-
-// Uncheck all checkboxes for filtered tasks
-async function removeChecks(tasks) {
-    for (let i = 0; i < tasks.results.length; i++) {
-        const response = await fetch(`https://api.notion.com/v1/pages/${tasks.results[i].id}`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
-                'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                properties: {
-                    Checkbox: {
-                        checkbox: false,
-                    } 
-                }
-            })
-        });
-        const data = await response.json();
-        console.log(`Unchecked ${tasks.results[i].properties.Name.title[0].plain_text}, #${i}`);
+    let tasks = [];
+    for (let i = 0; i < data.results.length; i++) {
+        tasks.push(data.results[i]);
     }
-    hasMore(tasks);
+    const moreTasks = await hasMore(data)
+    for (let i = 0; i < moreTasks.length; i ++) {
+        tasks.push(moreTasks[i]);
+    }
+    return tasks
 }
 
 // If tasks number exceeds 100, request next batch
 async function hasMore(data){
     if (data.has_more) {
+        let tasks = []
         let current_data = data;
         let has_more = data.has_more;
         while (has_more) {
@@ -90,14 +76,43 @@ async function hasMore(data){
                 })
             });
             const temp = await response.json();
-            removeChecks(temp);
+            for (let i = 0; i < temp.results.length; i++) {
+                tasks.push(temp.results[i])
+            }
             if (temp.has_more) {
                 current_data = temp;
             } else {
-                has_more = false;
+                return tasks;
             }
         } 
+    } else {
+        return []
     }
+}
+
+// Uncheck all checkboxes for filtered tasks
+async function removeChecks(tasks) {
+    console.log(`Removing checks from ${tasks.length} tasks`)
+    for (let i = 0; i < tasks.length; i++) {
+        const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                'Notion-Version': '2025-09-03',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                properties: {
+                    Checkbox: {
+                        checkbox: false,
+                    } 
+                }
+            })
+        });
+        const data = await response.json();
+        console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+    }
+    console.log(`Removed checkboxes from ${tasks.length} tasks`);
 }
 
 main();
