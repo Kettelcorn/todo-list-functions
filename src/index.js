@@ -47,8 +47,8 @@ async function getDailyTasks(){
     });
     const data = await response.json();
     let tasks = [];
-    for (let i = 0; i < data.results.length; i++) {
-        tasks.push(data.results[i]);
+    for (result in data.results) {
+        tasks.push(result);
     }
     const moreTasks = await hasMore(data)
     for (let i = 0; i < moreTasks.length; i ++) {
@@ -76,8 +76,8 @@ async function hasMore(data){
                 })
             });
             const temp = await response.json();
-            for (let i = 0; i < temp.results.length; i++) {
-                tasks.push(temp.results[i])
+            for (result in temp.results) {
+                tasks.push(result)
             }
             if (temp.has_more) {
                 current_data = temp;
