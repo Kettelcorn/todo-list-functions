@@ -8,9 +8,9 @@ async function main() {
 // Getting all tasks that have morning, afternoon, and evenining tags
 async function getDailyTasks(){
     let data_source = process.env.DATA_SOURCE;
-    if (process.env.NODE_ENV == 'development') {
-        data_source = process.env.TEST_DATA_SOURCE;
-    }
+    //if (process.env.NODE_ENV == 'development') {
+    //    data_source = process.env.TEST_DATA_SOURCE;
+    //}
     const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
     method: 'POST',
     headers: {
@@ -50,7 +50,7 @@ async function getDailyTasks(){
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
     }
-    const moreTasks = await hasMore(data)
+    const moreTasks = hasMore(data, data_source)
     for (let i = 0; i < moreTasks.length; i ++) {
         tasks.push(moreTasks[i]);
     }
@@ -58,13 +58,13 @@ async function getDailyTasks(){
 }
 
 // If tasks number exceeds 100, request next batch
-async function hasMore(data){
+async function hasMore(data, data_source){
     if (data.has_more) {
         let tasks = []
         let current_data = data;
         let has_more = data.has_more;
         while (has_more) {
-            const response = await fetch(`https://api.notion.com/v1/data_sources/${process.env.TEST_DATA_SOURCE}/query`, {
+            const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `${process.env.NOTION_TOKEN}`,
@@ -76,6 +76,7 @@ async function hasMore(data){
                 })
             });
             const temp = await response.json();
+            console.log(temp)
             for (let i = 0; i < temp.results.length; i++) {
                 tasks.push(temp.results[i])
             }
