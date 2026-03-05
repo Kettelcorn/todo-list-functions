@@ -28,8 +28,8 @@ async function getTasks() {
     });
     const data = await response.json();
     let tasks = []
-    for (let i = 0; i < data.results.length; i++) {
-        tasks.push(data.results[i]);
+    for (task in data.results) {
+        tasks.push(task);
     }
     const moreTasks = await hasMore(data, data_source)
     for (let i = 0; i < moreTasks.length; i++) {
