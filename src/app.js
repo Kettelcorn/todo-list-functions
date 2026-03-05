@@ -11,41 +11,46 @@ async function main() {
 
 // Getting all tasks that have morning, afternoon, and evenining tags
 async function getDailyTasks(data_source){
-    const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-    method: 'POST',
-    headers: {
-        'Authorization': `${process.env.NOTION_TOKEN}`,
-        'Notion-Version': '2025-09-03',
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        filter: {
-            "and": [
-                {
-                    property: "Checkbox",
-                    checkbox: { equals: true},   
-                },
-                {
-                    "or": [
+    let data;
+    try {
+        const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `${process.env.NOTION_TOKEN}`,
+                'Notion-Version': '2025-09-03',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filter: {
+                    "and": [
                         {
-                            property: 'Tags',
-                            multi_select: { contains: "Morning" },
+                            property: "Checkbox",
+                            checkbox: { equals: true},   
                         },
                         {
-                            property: 'Tags',
-                            multi_select: { contains: "Afternoon"},
-                        },
-                        {
-                            property: 'Tags',
-                            multi_select: { contains: "Evening"},
+                            "or": [
+                                {
+                                    property: 'Tags',
+                                    multi_select: { contains: "Morning" },
+                                },
+                                {
+                                    property: 'Tags',
+                                    multi_select: { contains: "Afternoon"},
+                                },
+                                {
+                                    property: 'Tags',
+                                    multi_select: { contains: "Evening"},
+                                }
+                            ]
                         }
                     ]
                 }
-            ]
-        }
-    })
-    });
-    const data = await response.json();
+            })
+        });
+        data = await response.json();
+    } catch (error) {
+        console.error('Failed to get filtered tasks: ', error)
+    }
     let tasks = [];
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
@@ -64,42 +69,47 @@ async function hasMore(data, data_source){
         let current_data = data;
         let has_more = data.has_more;
         while (has_more) {
-            const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `${process.env.NOTION_TOKEN}`,
-                    'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    start_cursor: current_data.next_cursor,
-                    filter: {
-                        "and": [
-                            {
-                                property: "Checkbox",
-                                checkbox: { equals: true},   
-                            },
-                            {
-                                "or": [
-                                    {
-                                        property: 'Tags',
-                                        multi_select: { contains: "Morning" },
-                                    },
-                                    {
-                                        property: 'Tags',
-                                        multi_select: { contains: "Afternoon"},
-                                    },
-                                    {
-                                        property: 'Tags',
-                                        multi_select: { contains: "Evening"},
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                })
-            });
-            const temp = await response.json();
+            let temp;
+            try {
+                const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `${process.env.NOTION_TOKEN}`,
+                        'Notion-Version': '2025-09-03',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start_cursor: current_data.next_cursor,
+                        filter: {
+                            "and": [
+                                {
+                                    property: "Checkbox",
+                                    checkbox: { equals: true},   
+                                },
+                                {
+                                    "or": [
+                                        {
+                                            property: 'Tags',
+                                            multi_select: { contains: "Morning" },
+                                        },
+                                        {
+                                            property: 'Tags',
+                                            multi_select: { contains: "Afternoon"},
+                                        },
+                                        {
+                                            property: 'Tags',
+                                            multi_select: { contains: "Evening"},
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    })
+                });
+                temp = await response.json();
+            } catch (error) {
+                console.error('Failed to get more tasks: ', error)
+            } 
             for (let i = 0; i < temp.results.length; i++) {
                 tasks.push(temp.results[i])
             }
@@ -119,22 +129,27 @@ async function hasMore(data, data_source){
 async function removeChecks(tasks) {
     console.log(`Removing checks from ${tasks.length} tasks`)
     for (let i = 0; i < tasks.length; i++) {
-        const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
-                'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                properties: {
-                    Checkbox: {
-                        checkbox: false,
-                    } 
-                }
-            })
-        });
-        const data = await response.json();
+        let data;
+        try {
+            const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                    'Notion-Version': '2025-09-03',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: {
+                        Checkbox: {
+                            checkbox: false,
+                        } 
+                    }
+                })
+            });
+            data = await response.json();
+        } catch (error) {
+            console.error('Failed to remove checkmarks from tasks: ', error)
+        }
         console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
     }
     console.log(`Removed checkboxes from ${tasks.length} tasks`);

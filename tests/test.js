@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const index = require("../src/app.js");
+const app = require("../src/app.js");
 require('dotenv').config()
 
 test('Test removing checkmarks from daily tasks', async (t) => {
@@ -8,7 +8,7 @@ test('Test removing checkmarks from daily tasks', async (t) => {
     await addChecks(tasks);
     const checkedTasks = await getTasks()
     assert.ok(allChecked(checkedTasks))
-    const complete = await index.main(process.env.TEST_DATA_SOURCE);
+    const complete = await app.main(process.env.TEST_DATA_SOURCE);
     if (complete) {
         const updatedTasks = await getTasks();
         assert.ok(onlyDailyUnchecked(updatedTasks))
@@ -18,15 +18,21 @@ test('Test removing checkmarks from daily tasks', async (t) => {
 
 async function getTasks() {
     const data_source = process.env.TEST_DATA_SOURCE;
-    const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `${process.env.NOTION_TOKEN}`,
-            'Notion-Version': '2025-09-03',
-            'Content-Type': 'application/json',
-        },
-    });
-    const data = await response.json();
+    let data;
+    try {
+        const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `${process.env.NOTION_TOKEN}`,
+                'Notion-Version': '2025-09-03',
+                'Content-Type': 'application/json',
+            },
+        });
+        data = await response.json();
+    } catch (error) {
+        console.error("Failed to get all tasks: ", error);
+    }
+    
     let tasks = []
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
@@ -45,18 +51,23 @@ async function hasMore(data, data_source) {
         let current_data = data;
         let has_more = data.has_more;
         while (has_more) {
-            const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `${process.env.NOTION_TOKEN}`,
-                    'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    start_cursor: current_data.next_cursor,
-                })
-            });
-            const temp = await response.json();
+            let temp;
+            try {
+                const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `${process.env.NOTION_TOKEN}`,
+                        'Notion-Version': '2025-09-03',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start_cursor: current_data.next_cursor,
+                    })
+                });
+                temp = await response.json();
+            } catch (error) {
+                console.error("Failed to get more tasks: ", error);
+            }
             for (let i = 0; i < temp.results.length; i++) {
                 tasks.push(temp.results[i])
             }
@@ -73,22 +84,27 @@ async function hasMore(data, data_source) {
 
 async function addChecks(tasks) {
     for (let i = 0; i < tasks.length; i++) {
-        const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
-                'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                properties: {
-                    Checkbox: {
-                        checkbox: true,
-                    } 
-                }
-            })
-        });
-        const data = await response.json();
+        let data;
+        try {
+            const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                    'Notion-Version': '2025-09-03',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: {
+                        Checkbox: {
+                            checkbox: true,
+                        } 
+                    }
+                })
+            });
+            data = await response.json();
+        } catch (error) {
+            console.error("Failed to add checks to tasks:", error);
+        }
         console.log(`Checked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
     }
     console.log(`Added checks t0 ${tasks.length} tasks`);    
