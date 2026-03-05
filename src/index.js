@@ -1,16 +1,12 @@
 require('dotenv').config()
 
-async function main() {
-    const filteredTasks = await getDailyTasks();
-    removeChecks(filteredTasks);
+async function main(data_source) {
+    const filteredTasks = await getDailyTasks(data_source);
+    return await removeChecks(filteredTasks);
 }
 
 // Getting all tasks that have morning, afternoon, and evenining tags
-async function getDailyTasks(){
-    let data_source = process.env.DATA_SOURCE;
-    //if (process.env.NODE_ENV == 'development') {
-    //    data_source = process.env.TEST_DATA_SOURCE;
-    //}
+async function getDailyTasks(data_source){
     const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
     method: 'POST',
     headers: {
@@ -50,8 +46,8 @@ async function getDailyTasks(){
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
     }
-    const moreTasks = hasMore(data, data_source)
-    for (let i = 0; i < moreTasks.length; i ++) {
+    const moreTasks = await hasMore(data, data_source)
+    for (let i = 0; i < moreTasks.length; i++) {
         tasks.push(moreTasks[i]);
     }
     return tasks
@@ -73,13 +69,37 @@ async function hasMore(data, data_source){
                 },
                 body: JSON.stringify({
                     start_cursor: current_data.next_cursor,
+                    filter: {
+                        "and": [
+                            {
+                                property: "Checkbox",
+                                checkbox: { equals: true},   
+                            },
+                            {
+                                "or": [
+                                    {
+                                        property: 'Tags',
+                                        multi_select: { contains: "Morning" },
+                                    },
+                                    {
+                                        property: 'Tags',
+                                        multi_select: { contains: "Afternoon"},
+                                    },
+                                    {
+                                        property: 'Tags',
+                                        multi_select: { contains: "Evening"},
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                 })
             });
             const temp = await response.json();
-            console.log(temp)
             for (let i = 0; i < temp.results.length; i++) {
                 tasks.push(temp.results[i])
             }
+            console.log(`Tasks is now ${tasks.length} long`)
             if (temp.has_more) {
                 current_data = temp;
             } else {
@@ -114,6 +134,7 @@ async function removeChecks(tasks) {
         console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
     }
     console.log(`Removed checkboxes from ${tasks.length} tasks`);
+    return true;
 }
 
-main();
+module.exports = { main }
