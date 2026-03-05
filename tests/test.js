@@ -28,7 +28,7 @@ async function getTasks() {
     });
     const data = await response.json();
     let tasks = []
-    for (let i = 0; i < Object.keys(data.results).length; i++) {
+    for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
     }
     const moreTasks = await hasMore(data, data_source)
