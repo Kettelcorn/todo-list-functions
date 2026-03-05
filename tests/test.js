@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const index = require("../src/index.js");
+const index = require("../src/app.js");
 require('dotenv').config()
 
 test('Test removing checkmarks from daily tasks', async (t) => {
@@ -28,8 +28,8 @@ async function getTasks() {
     });
     const data = await response.json();
     let tasks = []
-    for (task in data.results) {
-        tasks.push(task);
+    for (let i = 0; i < data.results.length; i++) {
+        tasks.push(data.results[i]);
     }
     const moreTasks = await hasMore(data, data_source)
     for (let i = 0; i < moreTasks.length; i++) {

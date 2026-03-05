@@ -1,6 +1,10 @@
 require('dotenv').config()
 
-async function main(data_source) {
+async function main() {
+    let data_source = process.env.DATA_SOURCE;
+    if (process.env.NODE_ENV == 'development') {
+        data_source = process.env.TEST_DATA_SOURCE;
+    }
     const filteredTasks = await getDailyTasks(data_source);
     return await removeChecks(filteredTasks);
 }
