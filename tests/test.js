@@ -2,10 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert');
 const app = require("../src/app.js");
 require('dotenv').config()
+let data_source;
 
-const data_source = app.getDataSourceId(process.env.TEST_DATA_URL)
 
 test('Test removing checkmarks from daily tasks', async (t) => {
+    data_source = await app.getDataSourceId(process.env.TEST_DATA_URL)
     const tasks = await app.getTasks(data_source, {});
     await app.updateChecks(tasks, true);
     const checkedTasks = await app.getTasks(data_source, {});
@@ -16,6 +17,8 @@ test('Test removing checkmarks from daily tasks', async (t) => {
         assert.ok(onlyDailyUnchecked(updatedTasks))
     }
 });
+
+
 
 function allChecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {

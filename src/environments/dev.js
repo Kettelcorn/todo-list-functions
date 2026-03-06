@@ -1,5 +1,14 @@
 const app = require("../app.js")
 require('dotenv').config()
 
-const data_source = app.getDataSourceId(process.env.TEST_DATA_URL);
-app.main(data_source)
+async function execute() {
+    const data_source = await app.getDataSourceId(process.env.TEST_DATA_URL);
+    app.main(data_source)
+}
+
+execute();
+
+
+
+
+

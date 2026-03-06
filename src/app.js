@@ -175,7 +175,6 @@ async function getDataSourceId(url) {
 async function getDataBaseId(url) {
     let data;
     const page_id = url.substring(url.length - 32, url.length)
-    console.log(page_id)
     try {
         const response = await fetch(`https://api.notion.com/v1/pages/${page_id}`, {
             method: 'GET',
@@ -189,7 +188,7 @@ async function getDataBaseId(url) {
     } catch (error) {
         console.error("Could not get data source: ", error);
     }
-    console.log(data.properties);
+    return data.data_sources[0].id;
 }
 
 module.exports = { main, updateChecks, getTasks, getDataSourceId }
