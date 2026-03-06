@@ -1,10 +1,8 @@
 require('dotenv').config()
 
-async function main() {
-    let data_source = process.env.DATA_SOURCE;
-    if (process.env.NODE_ENV == 'development') {
-        data_source = process.env.TEST_DATA_SOURCE;
-    }
+const notion_token = process.env.NOTION_TOKEN;
+
+async function main(data_source) {
     const dailyFilter = {
         filter: {
             "and": [
@@ -42,7 +40,7 @@ async function getTasks(data_source, filters){
         const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
             method: 'POST',
             headers: {
-                'Authorization': `${process.env.NOTION_TOKEN}`,
+                'Authorization': `${notion_token}`,
                 'Notion-Version': '2025-09-03',
                 'Content-Type': 'application/json',
             },
@@ -75,7 +73,7 @@ async function hasMore(data, data_source, filters){
                 const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `${process.env.NOTION_TOKEN}`,
+                        'Authorization': `${notion_token}`,
                         'Notion-Version': '2025-09-03',
                         'Content-Type': 'application/json',
                     },
@@ -116,7 +114,7 @@ async function updateChecks(tasks, isChecked) {
             const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                    'Authorization': `Bearer ${notion_token}`,
                     'Notion-Version': '2025-09-03',
                     'Content-Type': 'application/json',
                 },
@@ -152,4 +150,46 @@ async function updateChecks(tasks, isChecked) {
     return true;
 }
 
-module.exports = { main, updateChecks, getTasks }
+// Pass in the url of a database and return the data source id for that database
+async function getDataSourceId(url) {
+    let data;
+    const mark = url.indexOf('?')
+    const database_id = url.substring(mark - 32, mark)
+    try {
+        const response = await fetch(`https://api.notion.com/v1/databases/${database_id}`, {
+            method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${notion_token}`,
+                    'Notion-Version': '2025-09-03',
+                    'Content-Type': 'application/json',
+                }
+        })
+        data = await response.json();
+    } catch (error) {
+        console.error("Could not get data source: ", error);
+    }
+    return data.data_sources[0].id
+}
+
+// Pass in the url of a notion page and return the database url. Only works with the first database in the page.
+async function getDataBaseId(url) {
+    let data;
+    const page_id = url.substring(url.length - 32, url.length)
+    console.log(page_id)
+    try {
+        const response = await fetch(`https://api.notion.com/v1/pages/${page_id}`, {
+            method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${notion_token}`,
+                    'Notion-Version': '2025-09-03',
+                    'Content-Type': 'application/json',
+                }
+        })
+        data = await response.json();
+    } catch (error) {
+        console.error("Could not get data source: ", error);
+    }
+    console.log(data.properties);
+}
+
+module.exports = { main, updateChecks, getTasks, getDataSourceId }

@@ -8,8 +8,9 @@
   "main": "src/app.js",
   "scripts": {
     "test": "node tests/test.js",
-    "dev": "node src/prod.js",
-    "prod": "node src/prod.js"
+    "dev": "node src/environments/dev.js",
+    "stage": "node src/environments/stage.js",
+    "prod": "node src/environments/prod.js"
   },
   "dependencies": {
     "dotenv": "^17.3.1"

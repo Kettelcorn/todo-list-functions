@@ -3,8 +3,9 @@ const assert = require('node:assert');
 const app = require("../src/app.js");
 require('dotenv').config()
 
+const data_source = process.env.TEST_DATA_SOURCE;
+
 test('Test removing checkmarks from daily tasks', async (t) => {
-    data_source = process.env.TEST_DATA_SOURCE;
     const tasks = await app.getTasks(data_source, {});
     await app.updateChecks(tasks, true);
     const checkedTasks = await app.getTasks(data_source, {});
