@@ -4,83 +4,17 @@ const app = require("../src/app.js");
 require('dotenv').config()
 
 test('Test removing checkmarks from daily tasks', async (t) => {
-    const tasks = await getTasks();
+    data_source = process.env.TEST_DATA_SOURCE;
+    const tasks = await app.getTasks(data_source, {});
     await app.updateChecks(tasks, true);
-    const checkedTasks = await getTasks()
+    const checkedTasks = await app.getTasks(data_source, {});
     assert.ok(allChecked(checkedTasks))
-    const complete = await app.main(process.env.TEST_DATA_SOURCE);
+    const complete = await app.main(data_source);
     if (complete) {
-        const updatedTasks = await getTasks();
+        const updatedTasks = await app.getTasks(data_source, {});
         assert.ok(onlyDailyUnchecked(updatedTasks))
     }
 });
-
-
-async function getTasks() {
-    const data_source = process.env.TEST_DATA_SOURCE;
-    let data;
-    try {
-        const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `${process.env.NOTION_TOKEN}`,
-                'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
-            },
-        });
-        data = await response.json();
-    } catch (error) {
-        console.error("Failed to get all tasks: ", error);
-    }
-    
-    let tasks = []
-    for (let i = 0; i < data.results.length; i++) {
-        tasks.push(data.results[i]);
-    }
-    const moreTasks = await hasMore(data, data_source)
-    for (let i = 0; i < moreTasks.length; i++) {
-        tasks.push(moreTasks[i])
-    }
-    console.log(`Total tasks = ${tasks.length}`)
-    return tasks
-}
-
-async function hasMore(data, data_source) {
-    if (data.has_more) {
-        let tasks = []
-        let current_data = data;
-        let has_more = data.has_more;
-        while (has_more) {
-            let temp;
-            try {
-                const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `${process.env.NOTION_TOKEN}`,
-                        'Notion-Version': '2025-09-03',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        start_cursor: current_data.next_cursor,
-                    })
-                });
-                temp = await response.json();
-            } catch (error) {
-                console.error("Failed to get more tasks: ", error);
-            }
-            for (let i = 0; i < temp.results.length; i++) {
-                tasks.push(temp.results[i])
-            }
-            if (temp.has_more) {
-                current_data = temp;
-            } else {
-                return tasks;
-            }
-        } 
-    } else {
-        return []
-    }
-}
 
 function allChecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {

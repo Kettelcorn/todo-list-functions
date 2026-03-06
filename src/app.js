@@ -5,12 +5,38 @@ async function main() {
     if (process.env.NODE_ENV == 'development') {
         data_source = process.env.TEST_DATA_SOURCE;
     }
-    const filteredTasks = await getDailyTasks(data_source);
+    const dailyFilter = {
+        filter: {
+            "and": [
+                {
+                    property: "Checkbox",
+                    checkbox: { equals: true},   
+                },
+                {
+                    "or": [
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Morning" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Afternoon"},
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Evening"},
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    const filteredTasks = await getTasks(data_source, dailyFilter);
     return await updateChecks(filteredTasks, false);
 }
 
-// Getting all tasks that have morning, afternoon, and evenining tags
-async function getDailyTasks(data_source){
+// Gets all tasks with the specific filter applied. Pass in {} for no filters if you want all tasks
+async function getTasks(data_source, filters){
     let data;
     try {
         const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
@@ -20,32 +46,7 @@ async function getDailyTasks(data_source){
                 'Notion-Version': '2025-09-03',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                filter: {
-                    "and": [
-                        {
-                            property: "Checkbox",
-                            checkbox: { equals: true},   
-                        },
-                        {
-                            "or": [
-                                {
-                                    property: 'Tags',
-                                    multi_select: { contains: "Morning" },
-                                },
-                                {
-                                    property: 'Tags',
-                                    multi_select: { contains: "Afternoon"},
-                                },
-                                {
-                                    property: 'Tags',
-                                    multi_select: { contains: "Evening"},
-                                }
-                            ]
-                        }
-                    ]
-                }
-            })
+            body: JSON.stringify(filters)
         });
         data = await response.json();
     } catch (error) {
@@ -55,7 +56,7 @@ async function getDailyTasks(data_source){
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
     }
-    const moreTasks = await hasMore(data, data_source)
+    const moreTasks = await hasMore(data, data_source, filters)
     for (let i = 0; i < moreTasks.length; i++) {
         tasks.push(moreTasks[i]);
     }
@@ -63,7 +64,7 @@ async function getDailyTasks(data_source){
 }
 
 // If tasks number exceeds 100, request next batch
-async function hasMore(data, data_source){
+async function hasMore(data, data_source, filters){
     if (data.has_more) {
         let tasks = []
         let current_data = data;
@@ -80,30 +81,7 @@ async function hasMore(data, data_source){
                     },
                     body: JSON.stringify({
                         start_cursor: current_data.next_cursor,
-                        filter: {
-                            "and": [
-                                {
-                                    property: "Checkbox",
-                                    checkbox: { equals: true},   
-                                },
-                                {
-                                    "or": [
-                                        {
-                                            property: 'Tags',
-                                            multi_select: { contains: "Morning" },
-                                        },
-                                        {
-                                            property: 'Tags',
-                                            multi_select: { contains: "Afternoon"},
-                                        },
-                                        {
-                                            property: 'Tags',
-                                            multi_select: { contains: "Evening"},
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
+                        filter: filters.filter
                     })
                 });
                 temp = await response.json();
@@ -174,4 +152,4 @@ async function updateChecks(tasks, isChecked) {
     return true;
 }
 
-module.exports = { main, updateChecks }
+module.exports = { main, updateChecks, getTasks }
