@@ -5,7 +5,7 @@ require('dotenv').config()
 
 test('Test removing checkmarks from daily tasks', async (t) => {
     const tasks = await getTasks();
-    await addChecks(tasks);
+    await app.updateChecks(tasks, true);
     const checkedTasks = await getTasks()
     assert.ok(allChecked(checkedTasks))
     const complete = await app.main(process.env.TEST_DATA_SOURCE);
@@ -80,34 +80,6 @@ async function hasMore(data, data_source) {
     } else {
         return []
     }
-}
-
-async function addChecks(tasks) {
-    for (let i = 0; i < tasks.length; i++) {
-        let data;
-        try {
-            const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
-                    'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    properties: {
-                        Checkbox: {
-                            checkbox: true,
-                        } 
-                    }
-                })
-            });
-            data = await response.json();
-        } catch (error) {
-            console.error("Failed to add checks to tasks:", error);
-        }
-        console.log(`Checked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
-    }
-    console.log(`Added checks t0 ${tasks.length} tasks`);    
 }
 
 function allChecked(tasks) {

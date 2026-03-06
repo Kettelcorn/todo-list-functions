@@ -6,7 +6,7 @@ async function main() {
         data_source = process.env.TEST_DATA_SOURCE;
     }
     const filteredTasks = await getDailyTasks(data_source);
-    return await removeChecks(filteredTasks);
+    return await updateChecks(filteredTasks, false);
 }
 
 // Getting all tasks that have morning, afternoon, and evenining tags
@@ -126,8 +126,12 @@ async function hasMore(data, data_source){
 }
 
 // Uncheck all checkboxes for filtered tasks
-async function removeChecks(tasks) {
-    console.log(`Removing checks from ${tasks.length} tasks`)
+async function updateChecks(tasks, isChecked) {
+    if (isChecked) {
+        console.log(`Adding checks to ${tasks.length} tasks`)
+    } else {
+        console.log(`Removing checks from ${tasks.length} tasks`)
+    }
     for (let i = 0; i < tasks.length; i++) {
         let data;
         try {
@@ -141,19 +145,33 @@ async function removeChecks(tasks) {
                 body: JSON.stringify({
                     properties: {
                         Checkbox: {
-                            checkbox: false,
+                            checkbox: isChecked,
                         } 
                     }
                 })
             });
             data = await response.json();
         } catch (error) {
-            console.error('Failed to remove checkmarks from tasks: ', error)
+            if (isChecked) {
+                console.error('Failed to add checkmarks to tasks: ', error)
+            } else {
+                console.error('Failed to remove checkmarks from tasks: ', error)
+            }
+            
         }
-        console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+        if (isChecked) {
+            console.log(`Checked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+        } else {
+            console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+        }
+        
     }
-    console.log(`Removed checkboxes from ${tasks.length} tasks`);
+    if (isChecked) {
+        console.log(`Added checkboxes to ${tasks.length} tasks`);
+    } else {
+        console.log(`Removed checkboxes from ${tasks.length} tasks`);
+    }
     return true;
 }
 
-module.exports = { main }
+module.exports = { main, updateChecks }
