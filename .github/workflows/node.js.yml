@@ -11,9 +11,7 @@ on:
 
 env:
   NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-  DATA_SOURCE: ${{ secrets.DATA_SOURCE }}
-  TEST_DATA_SOURCE: ${{ secrets.TEST_DATA_SOURCE }}
-  NODE_ENV: ${{ secrets.NODE_ENV }}
+  TEST_DATA_URL: ${{ secrets.TEST_DATA_URL }}
     
 jobs:
   build:
