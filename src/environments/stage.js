@@ -1,5 +1,5 @@
 const app = require("../app.js")
-const requests = require('./requests.js')
+const requests = require('../requests.js')
 require('dotenv').config()
 
 async function execute() {

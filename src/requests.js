@@ -104,10 +104,16 @@ async function updateChecks(tasks, isChecked) {
                 console.error('Failed to remove checkmarks from tasks: ', error)
             }
         }
-        if (isChecked) {
-            console.log(`Checked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+        let name;
+        if (tasks[i].properties.Name.title.length > 0) {
+            name = tasks[i].properties.Name.title[0].plain_text;
         } else {
-            console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
+            name = "NAME_NOT_FOUND"
+        }
+        if (isChecked) {
+            console.log(`Checked ${name}, #${i + 1}`);
+        } else {
+            console.log(`Unchecked ${name}, #${i + 1}`);
         }
         
     }
@@ -155,7 +161,13 @@ async function updateNumber(task, newNumber) {
             })
         });
         data = await response.json();
-        console.log(`Updated ${task.properties.Name.title[0].plain_text}'s number to ${newNumber}`)
+        let name;
+        if (task.properties.Name.title.length > 0) {
+            name = tasks.properties.Name.title[0].plain_text;
+        } else {
+            name = "NAME_NOT_FOUND"
+        }
+        console.log(`Updated ${name}'s number to ${newNumber}`)
     } catch (error) {
         console.error('Unable to update number value: ', error)     
     }
