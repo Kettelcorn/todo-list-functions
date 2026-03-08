@@ -103,13 +103,14 @@ async function updateChecks(tasks, isChecked) {
             } else {
                 console.error('Failed to remove checkmarks from tasks: ', error)
             }
-            
         }
         if (isChecked) {
             console.log(`Checked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
         } else {
             console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
         }
+        //TODO: update to base on response rather than hardcode true;
+        return true;
         
     }
     if (isChecked) {
