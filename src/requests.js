@@ -109,8 +109,6 @@ async function updateChecks(tasks, isChecked) {
         } else {
             console.log(`Unchecked ${tasks[i].properties.Name.title[0].plain_text}, #${i + 1}`);
         }
-        //TODO: update to base on response rather than hardcode true;
-        return true;
         
     }
     if (isChecked) {
@@ -118,6 +116,7 @@ async function updateChecks(tasks, isChecked) {
     } else {
         console.log(`Removed checkboxes from ${tasks.length} tasks`);
     }
+     //TODO: update to base on response rather than hardcode true
     return true;
 }
 
