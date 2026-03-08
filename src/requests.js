@@ -114,8 +114,7 @@ async function updateChecks(tasks, isChecked) {
             console.log(`Checked ${name}, #${i + 1}`);
         } else {
             console.log(`Unchecked ${name}, #${i + 1}`);
-        }
-        
+        }  
     }
     if (isChecked) {
         console.log(`Added checkboxes to ${tasks.length} tasks`);
@@ -140,6 +139,7 @@ async function updateWeekly(tasks) {
         }
     }
     await updateChecks(needsUncheck, false);
+    return true;
 }
 
 async function updateNumber(task, newNumber) {
@@ -171,6 +171,7 @@ async function updateNumber(task, newNumber) {
     } catch (error) {
         console.error('Unable to update number value: ', error)     
     }
+    return true;
 }
 
 // Pass in the url of a database and return the data source id for that database

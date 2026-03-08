@@ -59,7 +59,8 @@ async function updateWeekly(data_source) {
         }
     };
     const weeklyTasks = await requests.getTasks(data_source, weeklyFilter)
-    await requests.updateWeekly(weeklyTasks);
+    const complete = await requests.updateWeekly(weeklyTasks);
+    return complete;
 }
 
 module.exports = { main, uncheckDaily, updateWeekly }
