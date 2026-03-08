@@ -5,57 +5,59 @@ const requests = require("../src/requests.js");
 require('dotenv').config()
 let data_source;
 
-
-test('Adding checks to all tasks', async (t) => {
-    data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-    const tasks = await requests.getTasks(data_source, {});
-    await requests.updateChecks(tasks, true);
-    const checkedTasks = await requests.getTasks(data_source, {});
-    assert.ok(allChecked(checkedTasks))
-    const complete = await app.uncheckDaily(data_source);
-    if (complete) {
-        const updatedTasks = await requests.getTasks(data_source, {});
-        assert.ok(onlyDailyUnchecked(updatedTasks))
-    }
-});
-
-test('Removing checks from daily tasks', async (t) => {
-    data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-    const complete = await app.uncheckDaily(data_source);
-    if (complete) {
-        const updatedTasks = await requests.getTasks(data_source, {});
-        assert.ok(onlyDailyUnchecked(updatedTasks))
-    }
-});
-
-test('Update weekend tasks', async (t) => {
-    const weekFilter = {
-        filter: {
-            property: 'Tags',
-            multi_select: { contains: "Weekly" },
+test('main test', async (t) => {
+    await t.test('Adding checks to all tasks', async (t) => {
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const tasks = await requests.getTasks(data_source, {});
+        await requests.updateChecks(tasks, true);
+        const checkedTasks = await requests.getTasks(data_source, {});
+        assert.ok(allChecked(checkedTasks))
+        const complete = await app.uncheckDaily(data_source);
+        if (complete) {
+            const updatedTasks = await requests.getTasks(data_source, {});
+            assert.ok(onlyDailyUnchecked(updatedTasks))
         }
-    }
-    data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-    const filteredTasks = await requests.getTasks(data_source, weekFilter);
-    const randomWeekly = await randomUpdateWeekly(filteredTasks, data_source)
-    const originalTasks = await requests.getTasks(data_source, weekFilter);
-    const complete = await app.updateWeekly(data_source);
-    console.log(complete)
-    const updatedTasks = await requests.getTasks(data_source, weekFilter);
-    for (let i = 0; i < updatedTasks.length; i++) {
-        if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
-            assert.strictEqual(originalTasks[i].properties.Number.number, updatedTasks[i].properties.Number.number + 1);
-        } else {
-            if (originalTasks[i].properties.Checkbox.checkbox === true) {
-                assert.strictEqual(updatedTasks[i].properties.Number.number, 6);
-                assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
-            } else {
-                assert.ok(!updatedTasks[i].properties.Checkbox.checkbox)
+    });
+
+    await t.test('Removing checks from daily tasks', async (t) => {
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const complete = await app.uncheckDaily(data_source);
+        if (complete) {
+            const updatedTasks = await requests.getTasks(data_source, {});
+            assert.ok(onlyDailyUnchecked(updatedTasks))
+        }
+    });
+
+    await t.test('Update weekend tasks', async (t) => {
+        const weekFilter = {
+            filter: {
+                property: 'Tags',
+                multi_select: { contains: "Weekly" },
             }
         }
-        console.log(`${updatedTasks[i].properties.Name.title[0].plain_text} passed tests!`);
-    }
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const filteredTasks = await requests.getTasks(data_source, weekFilter);
+        const randomWeekly = await randomUpdateWeekly(filteredTasks, data_source)
+        const originalTasks = await requests.getTasks(data_source, weekFilter);
+        const complete = await app.updateWeekly(data_source);
+        console.log(complete)
+        const updatedTasks = await requests.getTasks(data_source, weekFilter);
+        for (let i = 0; i < updatedTasks.length; i++) {
+            if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
+                assert.strictEqual(originalTasks[i].properties.Number.number, updatedTasks[i].properties.Number.number + 1);
+            } else {
+                if (originalTasks[i].properties.Checkbox.checkbox === true) {
+                    assert.strictEqual(updatedTasks[i].properties.Number.number, 6);
+                    assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
+                } else {
+                    assert.ok(!updatedTasks[i].properties.Checkbox.checkbox)
+                }
+            }
+            console.log(`${updatedTasks[i].properties.Name.title[0].plain_text} passed tests!`);
+        }
+    })
 })
+
 
 async function randomUpdateWeekly(tasks, data_source) {
     for (let i = 0; i < tasks.length; i++) {
