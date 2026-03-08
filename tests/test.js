@@ -45,12 +45,15 @@ test('main test', async (t) => {
         for (let i = 0; i < updatedTasks.length; i++) {
             if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
                 assert.strictEqual(originalTasks[i].properties.Number.number, updatedTasks[i].properties.Number.number + 1);
+                if (originalTasks[i].properties.Number.number == 1) {
+                    assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
+                }
             } else {
                 if (originalTasks[i].properties.Checkbox.checkbox === true) {
                     assert.strictEqual(updatedTasks[i].properties.Number.number, 6);
                     assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
                 } else {
-                    assert.ok(!updatedTasks[i].properties.Checkbox.checkbox)
+                    assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
                 }
             }
             console.log(`${updatedTasks[i].properties.Name.title[0].plain_text} passed tests!`);
