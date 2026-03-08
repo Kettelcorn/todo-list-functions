@@ -125,6 +125,7 @@ async function updateChecks(tasks, isChecked) {
     return true;
 }
 
+// Updates the number and checkbox values for each weekly tasks
 async function updateWeekly(tasks) {
     let needsUncheck = []
     for (let i = 0; i < tasks.length; i++) {
@@ -142,6 +143,7 @@ async function updateWeekly(tasks) {
     return true;
 }
 
+// Updates the number value for weekly tasks
 async function updateNumber(task, newNumber) {
     let data;
     try {
@@ -215,6 +217,7 @@ async function getDataBaseId(url) {
     return data.data_sources[0].id;
 }
 
+// Manually triggers a run of the cron job in the staging environment
 async function oneOffJob() {
     let data;
     try {

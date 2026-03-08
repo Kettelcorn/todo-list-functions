@@ -58,7 +58,7 @@ test('main test', async (t) => {
     })
 })
 
-
+// Randomly assigns number and check values to weekly tasks to simulate a random day
 async function randomUpdateWeekly(tasks, data_source) {
     for (let i = 0; i < tasks.length; i++) {
         let randomDays = getRandomInt(0, 7) - 1;
@@ -99,13 +99,14 @@ async function randomUpdateWeekly(tasks, data_source) {
     return true;
 }
 
+// Generate random int
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-
+// Checks to see if all checkboxes for tasks passed in are checked
 function allChecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {
         if (!tasks[i].properties.Checkbox.checkbox) {
@@ -116,6 +117,7 @@ function allChecked(tasks) {
     return true;
 }
 
+// Checks to see if only daily tasks are only unchecked and not other tasks
 function onlyDailyUnchecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {
         let isDaily = false;

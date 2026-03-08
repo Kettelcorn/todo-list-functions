@@ -8,6 +8,7 @@ async function main(data_source) {
     updateWeekly(data_source);
 }
 
+// Unchecks all daily tasks
 async function uncheckDaily(data_source) {
     const dailyFilter = {
         filter: {
@@ -39,6 +40,7 @@ async function uncheckDaily(data_source) {
     return await requests.updateChecks(filteredTasks, false);
 }
 
+// Updates weekly tasks based on number and checkbox
 async function updateWeekly(data_source) {
     const weeklyFilter = {
         filter: {
