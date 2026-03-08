@@ -163,7 +163,7 @@ async function updateNumber(task, newNumber) {
         data = await response.json();
         let name;
         if (task.properties.Name.title.length > 0) {
-            name = tasks.properties.Name.title[0].plain_text;
+            name = task.properties.Name.title[0].plain_text;
         } else {
             name = "NAME_NOT_FOUND"
         }
