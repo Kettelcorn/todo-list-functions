@@ -1,9 +1,10 @@
-const app = require("../app.js")
-require('dotenv').config()
+const app = require("../app.js");
+const requests = require("../requests.js");
+require('dotenv').config();
 
 async function execute() {
-    const data_source = await app.getDataSourceId(process.env.TEST_DATA_URL);
-    app.main(data_source)
+    const data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL);
+    app.main(data_source);
 }
 
 execute();
