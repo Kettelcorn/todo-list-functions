@@ -126,12 +126,13 @@ async function updateChecks(tasks, isChecked) {
 }
 
 // Updates the number and checkbox values for each weekly tasks
-async function updateWeekly(tasks) {
+async function updateRecurring(tasks) {
     let needsUncheck = []
     for (let i = 0; i < tasks.length; i++) {
         let daysLeft = tasks[i].properties.Number.number;
         if (daysLeft == null || daysLeft == 0) {
-            await updateNumber(tasks[i], 6)
+            const days = getDayCount(tasks[i]) - 1
+            await updateNumber(tasks[i], days);
         } else {
             await updateNumber(tasks[i], daysLeft - 1)
             if (daysLeft - 1 == 0) {
@@ -174,6 +175,38 @@ async function updateNumber(task, newNumber) {
         console.error('Unable to update number value: ', error)     
     }
     return true;
+}
+
+function getDayCount(task) {
+    let number = null;
+    for (let i = 0; i < task.properties.Tags.multi_select.length; i++) {
+        switch (task.properties.Tags.multi_select[i].name) {
+            case 'Every other day':
+                number = 2;
+                break;
+            case 'Semiweekly':
+                number =4;
+                break;
+            case 'Weekly':
+                number = 7;
+                break;
+            case 'Biweekly':
+                number = 14;
+                break;
+            case 'Monthly':
+                number = 30;
+                break;
+            case 'Semiannually':
+                number = 183;
+                break;
+            case 'Yearly':
+                number = 365;
+                break;
+        }
+        if (number != null) {
+            return number;
+        }
+    }
 }
 
 // Pass in the url of a database and return the data source id for that database
@@ -242,7 +275,8 @@ async function oneOffJob() {
 module.exports = { 
     getTasks,
     updateChecks,
-    updateWeekly,
+    updateRecurring,
+    getDayCount,
     getDataSourceId,
     getDataBaseId, 
     oneOffJob,

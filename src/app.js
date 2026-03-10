@@ -4,8 +4,8 @@ const requests = require('./requests.js')
 const notion_token = process.env.NOTION_TOKEN;
 
 async function main(data_source) {
-    uncheckDaily(data_source);
-    updateWeekly(data_source);
+    //uncheckDaily(data_source);
+    updateRecurring(data_source);
 }
 
 // Unchecks all daily tasks
@@ -41,8 +41,8 @@ async function uncheckDaily(data_source) {
 }
 
 // Updates weekly tasks based on number and checkbox
-async function updateWeekly(data_source) {
-    const weeklyFilter = {
+async function updateRecurring(data_source) {
+    const recurringFilter = {
         filter: {
             "and": [
                 {
@@ -53,16 +53,40 @@ async function updateWeekly(data_source) {
                     "or": [
                         {
                             property: 'Tags',
+                            multi_select: { contains: "Every other day" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Semiweekly" },
+                        },
+                        {
+                            property: 'Tags',
                             multi_select: { contains: "Weekly" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Biweekly" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Monthly" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Semiannually" },
+                        },
+                        {
+                            property: 'Tags',
+                            multi_select: { contains: "Yearly" },
                         }
                     ]
                 }
             ]
         }
     };
-    const weeklyTasks = await requests.getTasks(data_source, weeklyFilter)
-    const complete = await requests.updateWeekly(weeklyTasks);
+    const recurringTasks = await requests.getTasks(data_source, recurringFilter)
+    const complete = await requests.updateRecurring(recurringTasks);
     return complete;
 }
 
-module.exports = { main, uncheckDaily, updateWeekly }
+module.exports = { main, uncheckDaily, updateRecurring }

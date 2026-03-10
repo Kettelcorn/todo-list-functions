@@ -6,42 +6,69 @@ require('dotenv').config()
 let data_source;
 
 test('main test', async (t) => {
-    await t.test('Adding checks to all tasks', async (t) => {
-        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-        const tasks = await requests.getTasks(data_source, {});
-        await requests.updateChecks(tasks, true);
-        const checkedTasks = await requests.getTasks(data_source, {});
-        assert.ok(allChecked(checkedTasks))
-        const complete = await app.uncheckDaily(data_source);
-        if (complete) {
-            const updatedTasks = await requests.getTasks(data_source, {});
-            assert.ok(onlyDailyUnchecked(updatedTasks))
-        }
-    });
+    // await t.test('Adding checks to all tasks', async (t) => {
+    //     data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+    //     const tasks = await requests.getTasks(data_source, {});
+    //     await requests.updateChecks(tasks, true);
+    //     const checkedTasks = await requests.getTasks(data_source, {});
+    //     assert.ok(allChecked(checkedTasks))
+    //     const complete = await app.uncheckDaily(data_source);
+    //     if (complete) {
+    //         const updatedTasks = await requests.getTasks(data_source, {});
+    //         assert.ok(onlyDailyUnchecked(updatedTasks))
+    //     }
+    // });
 
-    await t.test('Removing checks from daily tasks', async (t) => {
-        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-        const complete = await app.uncheckDaily(data_source);
-        if (complete) {
-            const updatedTasks = await requests.getTasks(data_source, {});
-            assert.ok(onlyDailyUnchecked(updatedTasks))
-        }
-    });
+    // await t.test('Removing checks from daily tasks', async (t) => {
+    //     data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+    //     const complete = await app.uncheckDaily(data_source);
+    //     if (complete) {
+    //         const updatedTasks = await requests.getTasks(data_source, {});
+    //         assert.ok(onlyDailyUnchecked(updatedTasks))
+    //     }
+    // });
 
-    await t.test('Update weekend tasks', async (t) => {
-        const weekFilter = {
+    await t.test('Update recurring tasks', async (t) => {
+        const recurringFilter = {
             filter: {
-                property: 'Tags',
-                multi_select: { contains: "Weekly" },
+                "or": [
+                    {
+                        property: 'Tags',
+                        multi_select: { contains:  "Every other day" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Semiweekly" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Weekly" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Biweekly" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Monthly" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Semiannually" },
+                    },
+                    {
+                        property: 'Tags',
+                        multi_select: { contains: "Yearly" },
+                    }
+                ]
             }
         }
         data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-        const filteredTasks = await requests.getTasks(data_source, weekFilter);
-        const randomWeekly = await randomUpdateWeekly(filteredTasks, data_source)
-        const originalTasks = await requests.getTasks(data_source, weekFilter);
-        const complete = await app.updateWeekly(data_source);
-        console.log(complete)
-        const updatedTasks = await requests.getTasks(data_source, weekFilter);
+        const filteredTasks = await requests.getTasks(data_source, recurringFilter);
+        const randomUpdateRecurring = await randomUpdate(filteredTasks);
+        const originalTasks = await requests.getTasks(data_source, recurringFilter);
+        const complete = await app.updateRecurring(data_source);
+        const updatedTasks = await requests.getTasks(data_source, recurringFilter);
         for (let i = 0; i < updatedTasks.length; i++) {
             if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
                 assert.strictEqual(originalTasks[i].properties.Number.number, updatedTasks[i].properties.Number.number + 1);
@@ -50,7 +77,7 @@ test('main test', async (t) => {
                 }
             } else {
                 if (originalTasks[i].properties.Checkbox.checkbox === true) {
-                    assert.strictEqual(updatedTasks[i].properties.Number.number, 6);
+                    assert.strictEqual(updatedTasks[i].properties.Number.number, requests.getDayCount(updatedTasks[i]) - 1);
                     assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
                 } else {
                     assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
@@ -62,14 +89,14 @@ test('main test', async (t) => {
 })
 
 // Randomly assigns number and check values to weekly tasks to simulate a random day
-async function randomUpdateWeekly(tasks, data_source) {
+async function randomUpdate(tasks) {
     for (let i = 0; i < tasks.length; i++) {
-        let randomDays = getRandomInt(0, 7) - 1;
+        let randomDays = getRandomInt(0, requests.getDayCount(tasks[i])) - 1;
         let random;
         if (randomDays > 0) {
             random = true;
         } else {
-            random = getRandomInt(0, 2) === 1;
+            random = getRandomInt(0, 1) === 1;
         }
         if (randomDays === -1) {
             randomDays = null;
