@@ -4,7 +4,7 @@ const requests = require('./requests.js')
 const notion_token = process.env.NOTION_TOKEN;
 
 async function main(data_source) {
-    //uncheckDaily(data_source);
+    uncheckDaily(data_source);
     updateRecurring(data_source);
 }
 
