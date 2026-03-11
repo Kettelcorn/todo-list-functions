@@ -29,40 +29,15 @@ test('main test', async (t) => {
     });
 
     await t.test('Update recurring tasks', async (t) => {
-        const recurringFilter = {
-            filter: {
-                "or": [
-                    {
-                        property: 'Tags',
-                        multi_select: { contains:  "Every other day" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Semiweekly" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Weekly" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Biweekly" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Monthly" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Semiannually" },
-                    },
-                    {
-                        property: 'Tags',
-                        multi_select: { contains: "Yearly" },
-                    }
-                ]
-            }
-        }
+        const recurringFilter = requests.generateFilter(null, [
+            "Every other day",
+            "Semiweekly",
+            "Weekly",
+            "Biweekly",
+            "Monthly",
+            "Semiannually",
+            "Yearly"
+        ])
         data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
         const filteredTasks = await requests.getTasks(data_source, recurringFilter);
         const randomUpdateRecurring = await randomUpdate(filteredTasks);

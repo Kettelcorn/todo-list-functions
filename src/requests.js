@@ -177,6 +177,7 @@ async function updateNumber(task, newNumber) {
     return true;
 }
 
+// Returns number of days that should be inbetween reseting recurring tasks
 function getDayCount(task) {
     let number = null;
     for (let i = 0; i < task.properties.Tags.multi_select.length; i++) {
@@ -207,6 +208,52 @@ function getDayCount(task) {
             return number;
         }
     }
+}
+
+//Generate a filter based on passed in parameters:
+//Pass in a list of tags you wish to filter. If the tags variable is passed in a null, no tags should be filtered.
+//Pass in a boolean for checkboxes. If true, filtered for only checked tasks. If false, filter for unchecked tasks. If null, don't
+// filter for checkboxes.
+function generateFilter(checked, tags) {
+    let tagFilters;
+    let checkFilters;
+    let newFilter = {};
+    if (tags != null) {
+        let orTags = [];
+        for (let i = 0; i < tags.length; i++) {
+            orTags.push({
+                property: 'Tags',
+                multi_select: { contains: tags[i] }
+            })
+        }
+        if (tags.length > 1) {
+            tagFilters = {
+                "or": orTags
+            }
+        } else {
+            tagFilters.push(orTags[0]);
+        }
+        newFilter.filter = tagFilters;    
+    }
+    if (checked != null) {
+        checkFilters = {
+            property: 'Checkbox',
+            checkbox: { equals: checked},
+        }
+        if (newFilter.filter != null) {
+            return {
+                filter: {
+                    "and": [
+                        checkFilters,
+                        tagFilters
+                    ]
+                }
+            }
+        } else {
+            newFilter.filter = checkFilters;
+        }
+    }
+    return newFilter;
 }
 
 // Pass in the url of a database and return the data source id for that database
@@ -277,6 +324,7 @@ module.exports = {
     updateChecks,
     updateRecurring,
     getDayCount,
+    generateFilter,
     getDataSourceId,
     getDataBaseId, 
     oneOffJob,
