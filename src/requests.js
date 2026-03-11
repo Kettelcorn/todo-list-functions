@@ -71,14 +71,8 @@ async function hasMore(data, data_source, filters){
     }
 }
 
-// Will either check or uncheck all tasks passed in based on the isChecked value
-async function updateChecks(tasks, isChecked) {
-    if (isChecked) {
-        console.log(`Adding checks to ${tasks.length} tasks`)
-    } else {
-        console.log(`Removing checks from ${tasks.length} tasks`)
-    }
-    for (let i = 0; i < tasks.length; i++) {
+async function updateTasks(tasks, params) {
+    for (let i = 0; i < tasks.length; i ++) {
         let data;
         try {
             const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
@@ -88,39 +82,31 @@ async function updateChecks(tasks, isChecked) {
                     'Notion-Version': '2025-09-03',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    properties: {
-                        Checkbox: {
-                            checkbox: isChecked,
-                        } 
-                    }
-                })
+                body: JSON.stringify(params)
             });
             data = await response.json();
+            console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}:`)
+            console.log(params);
         } catch (error) {
-            if (isChecked) {
-                console.error('Failed to add checkmarks to tasks: ', error)
-            } else {
-                console.error('Failed to remove checkmarks from tasks: ', error)
-            }
+            console.error(error);
         }
-        let name;
-        if (tasks[i].properties.Name.title.length > 0) {
-            name = tasks[i].properties.Name.title[0].plain_text;
-        } else {
-            name = "NAME_NOT_FOUND"
-        }
-        if (isChecked) {
-            console.log(`Checked ${name}, #${i + 1}`);
-        } else {
-            console.log(`Unchecked ${name}, #${i + 1}`);
-        }  
     }
+    return true;
+}
+
+// Will either check or uncheck all tasks passed in based on the isChecked value
+async function updateChecks(tasks, isChecked) {
+    if (isChecked) {
+        console.log(`Adding checks to ${tasks.length} tasks`)
+    } else {
+        console.log(`Removing checks from ${tasks.length} tasks`)
+    }
+    await updateTasks(tasks, generateFilter(isChecked, null));    
     if (isChecked) {
         console.log(`Added checkboxes to ${tasks.length} tasks`);
     } else {
         console.log(`Removed checkboxes from ${tasks.length} tasks`);
-    }
+    }   
      //TODO: update to base on response rather than hardcode true
     return true;
 }
@@ -231,7 +217,7 @@ function generateFilter(checked, tags) {
                 "or": orTags
             }
         } else {
-            tagFilters.push(orTags[0]);
+            tagFilters = orTags[0];
         }
         newFilter.filter = tagFilters;    
     }
@@ -321,6 +307,7 @@ async function oneOffJob() {
 
 module.exports = { 
     getTasks,
+    updateTasks,
     updateChecks,
     updateRecurring,
     getDayCount,

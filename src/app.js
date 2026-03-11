@@ -6,6 +6,7 @@ const notion_token = process.env.NOTION_TOKEN;
 async function main(data_source) {
     await uncheckDaily(data_source);
     await updateRecurring(data_source);
+    await trashCheckedBacklog(data_source);
 }
 
 // Unchecks all daily tasks
@@ -35,4 +36,17 @@ async function updateRecurring(data_source) {
     return complete;
 }
 
-module.exports = { main, uncheckDaily, updateRecurring }
+async function trashCheckedBacklog(data_source) {
+    const backlogFilter = requests.generateFilter(true, [
+        "Backlog"
+    ])
+    console.log(backlogFilter);
+    const checkedBacklog = await requests.getTasks(data_source, backlogFilter);
+    console.log(checkedBacklog);
+    const complete = await requests.updateTasks(checkedBacklog, {
+        in_trash: true
+    })
+    return complete
+}
+
+module.exports = { main, uncheckDaily, updateRecurring, trashCheckedBacklog }
