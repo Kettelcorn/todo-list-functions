@@ -6,27 +6,27 @@ require('dotenv').config()
 let data_source;
 
 test('main test', async (t) => {
-    // await t.test('Adding checks to all tasks', async (t) => {
-    //     data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-    //     const tasks = await requests.getTasks(data_source, {});
-    //     await requests.updateChecks(tasks, true);
-    //     const checkedTasks = await requests.getTasks(data_source, {});
-    //     assert.ok(allChecked(checkedTasks))
-    //     const complete = await app.uncheckDaily(data_source);
-    //     if (complete) {
-    //         const updatedTasks = await requests.getTasks(data_source, {});
-    //         assert.ok(onlyDailyUnchecked(updatedTasks))
-    //     }
-    // });
+    await t.test('Adding checks to all tasks', async (t) => {
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const tasks = await requests.getTasks(data_source, {});
+        await requests.updateChecks(tasks, true);
+        const checkedTasks = await requests.getTasks(data_source, {});
+        assert.ok(allChecked(checkedTasks))
+        const complete = await app.uncheckDaily(data_source);
+        if (complete) {
+            const updatedTasks = await requests.getTasks(data_source, {});
+            assert.ok(onlyDailyUnchecked(updatedTasks))
+        }
+    });
 
-    // await t.test('Removing checks from daily tasks', async (t) => {
-    //     data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-    //     const complete = await app.uncheckDaily(data_source);
-    //     if (complete) {
-    //         const updatedTasks = await requests.getTasks(data_source, {});
-    //         assert.ok(onlyDailyUnchecked(updatedTasks))
-    //     }
-    // });
+    await t.test('Removing checks from daily tasks', async (t) => {
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const complete = await app.uncheckDaily(data_source);
+        if (complete) {
+            const updatedTasks = await requests.getTasks(data_source, {});
+            assert.ok(onlyDailyUnchecked(updatedTasks))
+        }
+    });
 
     await t.test('Update recurring tasks', async (t) => {
         const recurringFilter = {
