@@ -70,8 +70,9 @@ test('main test', async (t) => {
         const complete = await app.updateRecurring(data_source);
         const updatedTasks = await requests.getTasks(data_source, recurringFilter);
         for (let i = 0; i < updatedTasks.length; i++) {
+            console.log(`Testing ${updatedTasks[i].properties.Name.title[0].plain_text}...`)
             if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
-                assert.strictEqual(originalTasks[i].properties.Number.number, updatedTasks[i].properties.Number.number + 1);
+                assert.strictEqual(updatedTasks[i].properties.Number.number, originalTasks[i].properties.Number.number - 1);
                 if (originalTasks[i].properties.Number.number == 1) {
                     assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
                 }
