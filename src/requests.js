@@ -85,7 +85,11 @@ async function updateTasks(tasks, params) {
                 body: JSON.stringify(params)
             });
             data = await response.json();
-            console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}:`)
+            if (tasks[i].properties.Name.title != null) {
+                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}:`)
+            } else {
+                console.log(`Updated NAME_NOT_FOUND:`)
+            }
             console.log(params);
         } catch (error) {
             console.error(error);
@@ -101,7 +105,13 @@ async function updateChecks(tasks, isChecked) {
     } else {
         console.log(`Removing checks from ${tasks.length} tasks`)
     }
-    await updateTasks(tasks, generateFilter(isChecked, null));    
+    await updateTasks(tasks, {
+        properties: {
+            Checkbox: {
+                checkbox: isChecked,
+            }
+        }
+    });    
     if (isChecked) {
         console.log(`Added checkboxes to ${tasks.length} tasks`);
     } else {
