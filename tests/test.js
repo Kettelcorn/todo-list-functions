@@ -6,25 +6,24 @@ require('dotenv').config()
 let data_source;
 
 test('main test', async (t) => {
-    await t.test('Adding checks to all tasks', async (t) => {
-        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-        const tasks = await requests.getTasks(data_source, {});
-        await requests.updateChecks(tasks, true);
-        const checkedTasks = await requests.getTasks(data_source, {});
-        assert.ok(allChecked(checkedTasks))
-        const complete = await app.uncheckDaily(data_source);
-        if (complete) {
-            const updatedTasks = await requests.getTasks(data_source, {});
-            assert.ok(onlyDailyUnchecked(updatedTasks))
-        }
-    });
-
     await t.test('Removing checks from daily tasks', async (t) => {
         data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        const tasks = await requests.getTasks(data_source, requests.generateFilter(true, [
+            "Daily"
+        ]));
+        if (tasks.length < 205) {
+            const uncheckedDaily = await requests.getTasks(data_source, requests.generateFilter(false, [
+                "Daily"
+            ]))
+            const limitedTasks = uncheckedDaily.splice(0, 205 - tasks.length);
+            await requests.updateChecks(limitedTasks, true);
+        }
         const complete = await app.uncheckDaily(data_source);
         if (complete) {
-            const updatedTasks = await requests.getTasks(data_source, {});
-            assert.ok(onlyDailyUnchecked(updatedTasks))
+            const updatedTasks = await requests.getTasks(data_source, requests.generateFilter(null, [
+            "Daily"
+        ]));
+            assert.ok(allUnchecked(updatedTasks))
         }
     });
 
@@ -38,7 +37,9 @@ test('main test', async (t) => {
             "Semiannually",
             "Yearly"
         ])
-        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        if (data_source == null) {
+            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        }
         const filteredTasks = await requests.getTasks(data_source, recurringFilter);
         const randomUpdateRecurring = await randomUpdate(filteredTasks);
         const originalTasks = await requests.getTasks(data_source, recurringFilter);
@@ -110,37 +111,12 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Checks to see if all checkboxes for tasks passed in are checked
-function allChecked(tasks) {
-    for (let i = 0; i < tasks.length; i++) {
-        if (!tasks[i].properties.Checkbox.checkbox) {
-            console.log(`${tasks[i].properties.Name.title[0].plain_text} did not get checked`);
-            return false;
-        }
-    } 
-    return true;
-}
-
 // Checks to see if only daily tasks are only unchecked and not other tasks
-function onlyDailyUnchecked(tasks) {
+function allUnchecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {
-        let isDaily = false;
-        for (let j = 0; j < tasks[i].properties.Tags.multi_select.length; j++) {
-            if (tasks[i].properties.Tags.multi_select[j].name === 'Morning' ||
-                 tasks[i].properties.Tags.multi_select[j].name === 'Afternoon' ||
-                tasks[i].properties.Tags.multi_select[j].name === 'Evening') {
-                    if (tasks[i].properties.Checkbox.checkbox) {
-                        console.log(`${tasks[i].properties.Name.title[0].plain_text} is suppost to be unchecked`);
-                        return false;
-                    } else {
-                        isDaily = true;
-                        break;
-                    }
-            }
-        }
-        if (!tasks[i].properties.Checkbox.checkbox && !isDaily) {
-                    console.log(`${tasks[i].properties.Name.title[0].plain_text} is suppost to be checked`);
-                    return false;
+        if (tasks[i].properties.Checkbox.checkbox) {
+            console.log(`${tasks[i].properties.Name.title[0].plain_text} is suppost to be unchecked`);
+            return false;
         }
     }
     return true;

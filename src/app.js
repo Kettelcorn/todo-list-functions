@@ -1,6 +1,5 @@
 require('dotenv').config()
 const requests = require('./requests.js')
-const util = require('util')
 
 const notion_token = process.env.NOTION_TOKEN;
 
@@ -13,9 +12,7 @@ async function main(data_source) {
 // Unchecks all daily tasks
 async function uncheckDaily(data_source) {
     const dailyFilter = requests.generateFilter(true, [
-        "Morning",
-        "Afternoon",
-        "Evening"
+        "Daily"
     ])
     const filteredTasks = await requests.getTasks(data_source, dailyFilter);
     return await requests.updateChecks(filteredTasks, false);
