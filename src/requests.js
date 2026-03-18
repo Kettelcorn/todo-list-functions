@@ -1,6 +1,7 @@
 // This file contains functions involved in calling external API's, primarily Notion
 
 require('dotenv').config()
+const util = require('util')
 const notion_token = process.env.NOTION_TOKEN;
 
 // Gets all tasks with the specific filter applied. Pass in {} for no filters if you want all tasks
@@ -59,7 +60,7 @@ async function hasMore(data, data_source, filters){
             for (let i = 0; i < temp.results.length; i++) {
                 tasks.push(temp.results[i])
             }
-            console.log(`Tasks is now ${tasks.length} long`)
+            console.log(`Total tasks is now ${tasks.length + 100} long`)
             if (temp.has_more) {
                 current_data = temp;
             } else {
@@ -86,11 +87,10 @@ async function updateTasks(tasks, params) {
             });
             data = await response.json();
             if (tasks[i].properties.Name.title != null) {
-                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}:`)
+                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)}`)
             } else {
-                console.log(`Updated NAME_NOT_FOUND:`)
+                console.log(`Updated NAME_NOT_FOUND: ${params}`)
             }
-            console.log(params);
         } catch (error) {
             console.error(error);
         }

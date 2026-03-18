@@ -1,5 +1,6 @@
 require('dotenv').config()
 const requests = require('./requests.js')
+const util = require('util')
 
 const notion_token = process.env.NOTION_TOKEN;
 
@@ -40,9 +41,7 @@ async function trashCheckedBacklog(data_source) {
     const backlogFilter = requests.generateFilter(true, [
         "Backlog"
     ])
-    console.log(backlogFilter);
     const checkedBacklog = await requests.getTasks(data_source, backlogFilter);
-    console.log(checkedBacklog);
     const complete = await requests.updateTasks(checkedBacklog, {
         in_trash: true
     })
