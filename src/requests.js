@@ -73,6 +73,7 @@ async function hasMore(data, data_source, filters){
 }
 
 async function updateTasks(tasks, params) {
+    let results = []
     for (let i = 0; i < tasks.length; i ++) {
         let data;
         try {
@@ -87,15 +88,16 @@ async function updateTasks(tasks, params) {
             });
             data = await response.json();
             if (tasks[i].properties.Name.title != null) {
-                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)}`)
+                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)} (${i + 1})`)
             } else {
                 console.log(`Updated NAME_NOT_FOUND: ${params}`)
             }
         } catch (error) {
             console.error(error);
         }
+        results.push(data)
     }
-    return true;
+    return results
 }
 
 // Will either check or uncheck all tasks passed in based on the isChecked value
@@ -105,7 +107,7 @@ async function updateChecks(tasks, isChecked) {
     } else {
         console.log(`Removing checks from ${tasks.length} tasks`)
     }
-    await updateTasks(tasks, {
+    const results = await updateTasks(tasks, {
         properties: {
             Checkbox: {
                 checkbox: isChecked,
@@ -118,7 +120,7 @@ async function updateChecks(tasks, isChecked) {
         console.log(`Removed checkboxes from ${tasks.length} tasks`);
     }   
      //TODO: update to base on response rather than hardcode true
-    return true;
+    return results;
 }
 
 // Updates the number and checkbox values for each weekly tasks

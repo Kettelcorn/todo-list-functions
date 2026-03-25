@@ -15,7 +15,8 @@ async function uncheckDaily(data_source) {
         "Daily"
     ])
     const filteredTasks = await requests.getTasks(data_source, dailyFilter);
-    return await requests.updateChecks(filteredTasks, false);
+    const results = await requests.updateChecks(filteredTasks, false);
+    return results;
 }
 
 // Updates weekly tasks based on number and checkbox
@@ -43,6 +44,7 @@ async function trashCheckedBacklog(data_source) {
         in_trash: true
     })
     return complete
+    
 }
 
 module.exports = { main, uncheckDaily, updateRecurring, trashCheckedBacklog }

@@ -12,6 +12,7 @@ test('main test', async (t) => {
             "Daily"
         ]));
         if (tasks.length < 205) {
+            console.log("Not enough tasks")
             const uncheckedDaily = await requests.getTasks(data_source, requests.generateFilter(false, [
                 "Daily"
             ]))
@@ -41,7 +42,7 @@ test('main test', async (t) => {
             data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
         }
         const filteredTasks = await requests.getTasks(data_source, recurringFilter);
-        const randomUpdateRecurring = await randomUpdate(filteredTasks);
+        const randomUpdateRecurring = await randomUpdate(filteredTasks.splice(0, 50));
         const originalTasks = await requests.getTasks(data_source, recurringFilter);
         const complete = await app.updateRecurring(data_source);
         const updatedTasks = await requests.getTasks(data_source, recurringFilter);
@@ -60,11 +61,57 @@ test('main test', async (t) => {
                 }
             }
         }
-    })
+    });
+
+    await t.test('Move checked backlog tasks to trash', async (t) => {
+        if (data_source == null) {
+            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+        }
+        const backlogFilter = requests.generateFilter(null, [
+            "Backlog"
+        ]);
+         const tasks = await requests.getTasks(data_source, backlogFilter);
+        if (tasks.length != 0) {
+            let checked = [];
+            for (let i = 0; i < tasks.length; i++) {
+                if (tasks[i].properties.Checkbox.checkbox) {
+                    checked.push(tasks[i]);
+                }
+            }
+            if (checked.length == 0) {
+                checked = tasks.splice(0, 1)
+                await requests.updateChecks(checked, true)
+            }
+            const complete = await app.trashCheckedBacklog(data_source);
+            if (complete) {
+                const updatedTasks = await requests.getTasks(data_source, backlogFilter);
+                for (let i = 0; i < checked.length; i++) {
+                    for (let j = 0; j < updatedTasks.length; j++) {
+                        if (checked[i].id === updatedTasks[j].id) {
+                            assert.ok(updatedTasks[j].in_trash)
+                        }
+                    }
+                }
+                for (let i = 0; i < updatedTasks.length; i++) {
+                    if (!updatedTasks[i].in_trash) {
+                        assert.ok(!updatedTasks[i].properties.Checkbox.checkbox)
+                    } else {
+                        assert.ok(updatedTasks[i].properties.Checkbox.checkbox)
+                    }
+                }
+            }
+        } else {
+            //TODO: Create function to create a task for testing purposes, for now just print statement saying need backlog tasks
+            console.log("Currently no backlog tasks to test on");
+            assert.strictEquals("You need", "Backlog tasks (:");
+        }
+    });
 })
 
 // Randomly assigns number and check values to weekly tasks to simulate a random day
 async function randomUpdate(tasks) {
+    let results = []
+    console.log(`Randomly updating ${tasks.length} tasks...`)
     for (let i = 0; i < tasks.length; i++) {
         let randomDays = getRandomInt(0, requests.getDayCount(tasks[i])) - 1;
         let random;
@@ -96,12 +143,13 @@ async function randomUpdate(tasks) {
                 })
             });
             data = await response.json();
-            console.log(`Assigned ${random} and ${randomDays} to ${tasks[i].properties.Name.title[0].plain_text}`);
+            results.push(data);
+            console.log(`Assigned ${random} and ${randomDays} to ${tasks[i].properties.Name.title[0].plain_text} (${i + 1})`);
         } catch (error) {
             console.error(error);
         }
     }
-    return true;
+    return results;
 }
 
 // Generate random int
