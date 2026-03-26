@@ -125,21 +125,22 @@ async function updateChecks(tasks, isChecked) {
 
 // Updates the number and checkbox values for each weekly tasks
 async function updateRecurring(tasks) {
+    let results = []
     let needsUncheck = []
     for (let i = 0; i < tasks.length; i++) {
         let daysLeft = tasks[i].properties.Number.number;
         if (daysLeft == null || daysLeft == 0) {
             const days = getDayCount(tasks[i]) - 1
-            await updateNumber(tasks[i], days);
+            results.push(await updateNumber(tasks[i], days));
         } else {
-            await updateNumber(tasks[i], daysLeft - 1)
+            results.push(await updateNumber(tasks[i], daysLeft - 1))
             if (daysLeft - 1 == 0) {
                 needsUncheck.push(tasks[i]);
             }
         }
     }
-    await updateChecks(needsUncheck, false);
-    return true;
+    results.push(await updateChecks(needsUncheck, false));
+    return results;
 }
 
 // Updates the number value for weekly tasks
@@ -172,7 +173,7 @@ async function updateNumber(task, newNumber) {
     } catch (error) {
         console.error('Unable to update number value: ', error)     
     }
-    return true;
+    return data;
 }
 
 // Returns number of days that should be inbetween reseting recurring tasks
