@@ -1,60 +1,60 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const app = require("../src/app.js");
-const requests = require("../src/requests.js");
-require('dotenv').config()
+const app = require('../src/app.js');
+const requests = require('../src/requests.js');
+require('dotenv').config();
 let data_source;
 
 test('main test', async (t) => {
-    await t.test('Removing checks from daily tasks', async (t) => {
-        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
-        const tasks = await requests.getTasks(data_source, requests.generateFilter(true, [
-            "Daily"
-        ]));
+    await t.test('Removing checks from daily tasks', async () => {
+        data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL);
+        const tasks = await requests.getTasks(data_source, requests.generateFilter(true, ['Daily']));
         if (tasks.length < 205) {
-            console.log("Not enough tasks")
-            const uncheckedDaily = await requests.getTasks(data_source, requests.generateFilter(false, [
-                "Daily"
-            ]))
+            console.log('Not enough tasks');
+            const uncheckedDaily = await requests.getTasks(data_source, requests.generateFilter(false, ['Daily']));
             const limitedTasks = uncheckedDaily.splice(0, 205 - tasks.length);
             await requests.updateChecks(limitedTasks, true);
         }
         const complete = await app.uncheckDaily(data_source);
         if (complete) {
-            const updatedTasks = await requests.getTasks(data_source, requests.generateFilter(null, [
-            "Daily"
-        ]));
-            assert.ok(allUnchecked(updatedTasks))
+            const updatedTasks = await requests.getTasks(data_source, requests.generateFilter(null, ['Daily']));
+            assert.ok(allUnchecked(updatedTasks));
         }
     });
 
-    await t.test('Update recurring tasks', async (t) => {
+    await t.test('Update recurring tasks', async () => {
         const recurringFilter = requests.generateFilter(null, [
-            "Every other day",
-            "Semiweekly",
-            "Weekly",
-            "Biweekly",
-            "Monthly",
-            "Semiannually",
-            "Yearly"
-        ])
+            'Every other day',
+            'Semiweekly',
+            'Weekly',
+            'Biweekly',
+            'Monthly',
+            'Semiannually',
+            'Yearly'
+        ]);
         if (data_source == null) {
-            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL);
         }
         const filteredTasks = await requests.getTasks(data_source, recurringFilter);
-        const randomUpdateRecurring = await randomUpdate(filteredTasks.splice(0, 50));
+        await randomUpdate(filteredTasks.splice(0, 50));
         const originalTasks = await requests.getTasks(data_source, recurringFilter);
-        const complete = await app.updateRecurring(data_source);
+        await app.updateRecurring(data_source);
         const updatedTasks = await requests.getTasks(data_source, recurringFilter);
         for (let i = 0; i < updatedTasks.length; i++) {
             if (originalTasks[i].properties.Number.number !== null && originalTasks[i].properties.Number.number !== 0) {
-                assert.strictEqual(updatedTasks[i].properties.Number.number, originalTasks[i].properties.Number.number - 1);
+                assert.strictEqual(
+                    updatedTasks[i].properties.Number.number,
+                    originalTasks[i].properties.Number.number - 1
+                );
                 if (originalTasks[i].properties.Number.number == 1) {
                     assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
                 }
             } else {
                 if (originalTasks[i].properties.Checkbox.checkbox === true) {
-                    assert.strictEqual(updatedTasks[i].properties.Number.number, requests.getDayCount(updatedTasks[i]) - 1);
+                    assert.strictEqual(
+                        updatedTasks[i].properties.Number.number,
+                        requests.getDayCount(updatedTasks[i]) - 1
+                    );
                     assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
                 } else {
                     assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
@@ -63,14 +63,12 @@ test('main test', async (t) => {
         }
     });
 
-    await t.test('Move checked backlog tasks to trash', async (t) => {
+    await t.test('Move checked backlog tasks to trash', async () => {
         if (data_source == null) {
-            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL)
+            data_source = await requests.getDataSourceId(process.env.TEST_DATA_URL);
         }
-        const backlogFilter = requests.generateFilter(null, [
-            "Backlog"
-        ]);
-         const tasks = await requests.getTasks(data_source, backlogFilter);
+        const backlogFilter = requests.generateFilter(null, ['Backlog']);
+        const tasks = await requests.getTasks(data_source, backlogFilter);
         if (tasks.length != 0) {
             let checked = [];
             for (let i = 0; i < tasks.length; i++) {
@@ -79,8 +77,8 @@ test('main test', async (t) => {
                 }
             }
             if (checked.length == 0) {
-                checked = tasks.splice(0, 1)
-                await requests.updateChecks(checked, true)
+                checked = tasks.splice(0, 1);
+                await requests.updateChecks(checked, true);
             }
             const complete = await app.trashCheckedBacklog(data_source);
             if (complete) {
@@ -88,30 +86,30 @@ test('main test', async (t) => {
                 for (let i = 0; i < checked.length; i++) {
                     for (let j = 0; j < updatedTasks.length; j++) {
                         if (checked[i].id === updatedTasks[j].id) {
-                            assert.ok(updatedTasks[j].in_trash)
+                            assert.ok(updatedTasks[j].in_trash);
                         }
                     }
                 }
                 for (let i = 0; i < updatedTasks.length; i++) {
                     if (!updatedTasks[i].in_trash) {
-                        assert.ok(!updatedTasks[i].properties.Checkbox.checkbox)
+                        assert.ok(!updatedTasks[i].properties.Checkbox.checkbox);
                     } else {
-                        assert.ok(updatedTasks[i].properties.Checkbox.checkbox)
+                        assert.ok(updatedTasks[i].properties.Checkbox.checkbox);
                     }
                 }
             }
         } else {
             //TODO: Create function to create a task for testing purposes, for now just print statement saying need backlog tasks
-            console.log("Currently no backlog tasks to test on");
-            assert.strictEquals("You need", "Backlog tasks (:");
+            console.log('Currently no backlog tasks to test on');
+            assert.strictEquals('You need', 'Backlog tasks (:');
         }
     });
-})
+});
 
 // Randomly assigns number and check values to weekly tasks to simulate a random day
 async function randomUpdate(tasks) {
-    let results = []
-    console.log(`Randomly updating ${tasks.length} tasks...`)
+    let results = [];
+    console.log(`Randomly updating ${tasks.length} tasks...`);
     for (let i = 0; i < tasks.length; i++) {
         let randomDays = getRandomInt(0, requests.getDayCount(tasks[i])) - 1;
         let random;
@@ -122,29 +120,34 @@ async function randomUpdate(tasks) {
         }
         if (randomDays === -1) {
             randomDays = null;
-        } 
+        }
         try {
             const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                    Authorization: `Bearer ${process.env.NOTION_TOKEN}`,
                     'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     properties: {
                         Checkbox: {
-                            checkbox: random,
+                            checkbox: random
                         },
                         Number: {
-                            number: randomDays,
+                            number: randomDays
                         }
                     }
                 })
             });
-            data = await response.json();
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+            const data = await response.json();
             results.push(data);
-            console.log(`Assigned ${random} and ${randomDays} to ${tasks[i].properties.Name.title[0].plain_text} (${i + 1})`);
+            console.log(
+                `Assigned ${random} and ${randomDays} to ${tasks[i].properties.Name.title[0].plain_text} (${i + 1})`
+            );
         } catch (error) {
             console.error(error);
         }

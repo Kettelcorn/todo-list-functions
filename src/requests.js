@@ -1,41 +1,44 @@
 // This file contains functions involved in calling external API's, primarily Notion
 
-require('dotenv').config()
-const util = require('util')
+require('dotenv').config();
+const util = require('util');
 const notion_token = process.env.NOTION_TOKEN;
 
 // Gets all tasks with the specific filter applied. Pass in {} for no filters if you want all tasks
-async function getTasks(data_source, filters){
+async function getTasks(data_source, filters) {
     let data;
     try {
         const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
             method: 'POST',
             headers: {
-                'Authorization': `${notion_token}`,
+                Authorization: `${notion_token}`,
                 'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(filters)
         });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
         data = await response.json();
     } catch (error) {
-        console.error('Failed to get filtered tasks: ', error)
+        console.error('Failed to get filtered tasks: ', error);
     }
     let tasks = [];
     for (let i = 0; i < data.results.length; i++) {
         tasks.push(data.results[i]);
     }
-    const moreTasks = await hasMore(data, data_source, filters)
+    const moreTasks = await hasMore(data, data_source, filters);
     for (let i = 0; i < moreTasks.length; i++) {
         tasks.push(moreTasks[i]);
     }
-    return tasks
+    return tasks;
 }
 
 // If tasks number exceeds 100, request next batch
-async function hasMore(data, data_source, filters){
+async function hasMore(data, data_source, filters) {
     if (data.has_more) {
-        let tasks = []
+        let tasks = [];
         let current_data = data;
         let has_more = data.has_more;
         while (has_more) {
@@ -44,96 +47,104 @@ async function hasMore(data, data_source, filters){
                 const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `${notion_token}`,
+                        Authorization: `${notion_token}`,
                         'Notion-Version': '2025-09-03',
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         start_cursor: current_data.next_cursor,
                         filter: filters.filter
                     })
                 });
+                if (!response.ok) {
+                    throw new Error(`Response status: ${response.status}`);
+                }
                 temp = await response.json();
             } catch (error) {
-                console.error('Failed to get more tasks: ', error)
-            } 
-            for (let i = 0; i < temp.results.length; i++) {
-                tasks.push(temp.results[i])
+                console.error('Failed to get more tasks: ', error);
             }
-            console.log(`Total tasks is now ${tasks.length + 100} long`)
+            for (let i = 0; i < temp.results.length; i++) {
+                tasks.push(temp.results[i]);
+            }
+            console.log(`Total tasks is now ${tasks.length + 100} long`);
             if (temp.has_more) {
                 current_data = temp;
             } else {
                 return tasks;
             }
-        } 
+        }
     } else {
-        return []
+        return [];
     }
 }
 
 async function updateTasks(tasks, params) {
-    let results = []
-    for (let i = 0; i < tasks.length; i ++) {
+    let results = [];
+    for (let i = 0; i < tasks.length; i++) {
         let data;
         try {
             const response = await fetch(`https://api.notion.com/v1/pages/${tasks[i].id}`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${notion_token}`,
+                    Authorization: `Bearer ${notion_token}`,
                     'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(params)
             });
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
             data = await response.json();
             if (tasks[i].properties.Name.title != null) {
-                console.log(`Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)} (${i + 1})`)
+                console.log(
+                    `Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)} (${i + 1})`
+                );
             } else {
-                console.log(`Updated NAME_NOT_FOUND: ${params}`)
+                console.log(`Updated NAME_NOT_FOUND: ${params}`);
             }
         } catch (error) {
             console.error(error);
         }
-        results.push(data)
+        results.push(data);
     }
-    return results
+    return results;
 }
 
 // Will either check or uncheck all tasks passed in based on the isChecked value
 async function updateChecks(tasks, isChecked) {
     if (isChecked) {
-        console.log(`Adding checks to ${tasks.length} tasks`)
+        console.log(`Adding checks to ${tasks.length} tasks`);
     } else {
-        console.log(`Removing checks from ${tasks.length} tasks`)
+        console.log(`Removing checks from ${tasks.length} tasks`);
     }
     const results = await updateTasks(tasks, {
         properties: {
             Checkbox: {
-                checkbox: isChecked,
+                checkbox: isChecked
             }
         }
-    });    
+    });
     if (isChecked) {
         console.log(`Added checkboxes to ${tasks.length} tasks`);
     } else {
         console.log(`Removed checkboxes from ${tasks.length} tasks`);
-    }   
-     //TODO: update to base on response rather than hardcode true
+    }
+    //TODO: update to base on response rather than hardcode true
     return results;
 }
 
 // Updates the number and checkbox values for each weekly tasks
 async function updateRecurring(tasks) {
-    let results = []
-    let needsUncheck = []
+    let results = [];
+    let needsUncheck = [];
     for (let i = 0; i < tasks.length; i++) {
         let daysLeft = tasks[i].properties.Number.number;
         if (daysLeft == null || daysLeft == 0) {
-            const days = getDayCount(tasks[i]) - 1
+            const days = getDayCount(tasks[i]) - 1;
             results.push(await updateNumber(tasks[i], days));
         } else {
-            results.push(await updateNumber(tasks[i], daysLeft - 1))
+            results.push(await updateNumber(tasks[i], daysLeft - 1));
             if (daysLeft - 1 == 0) {
                 needsUncheck.push(tasks[i]);
             }
@@ -150,28 +161,31 @@ async function updateNumber(task, newNumber) {
         const response = await fetch(`https://api.notion.com/v1/pages/${task.id}`, {
             method: 'PATCH',
             headers: {
-                'Authorization': `Bearer ${notion_token}`,
+                Authorization: `Bearer ${notion_token}`,
                 'Notion-Version': '2025-09-03',
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 properties: {
                     Number: {
-                        number: newNumber,
-                    } 
+                        number: newNumber
+                    }
                 }
             })
         });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
         data = await response.json();
         let name;
         if (task.properties.Name.title.length > 0) {
             name = task.properties.Name.title[0].plain_text;
         } else {
-            name = "NAME_NOT_FOUND"
+            name = 'NAME_NOT_FOUND';
         }
-        console.log(`Updated ${name}'s number to ${newNumber}`)
+        console.log(`Updated ${name}'s number to ${newNumber}`);
     } catch (error) {
-        console.error('Unable to update number value: ', error)     
+        console.error('Unable to update number value: ', error);
     }
     return data;
 }
@@ -185,7 +199,7 @@ function getDayCount(task) {
                 number = 2;
                 break;
             case 'Semiweekly':
-                number =4;
+                number = 4;
                 break;
             case 'Weekly':
                 number = 7;
@@ -223,31 +237,28 @@ function generateFilter(checked, tags) {
             orTags.push({
                 property: 'Tags',
                 multi_select: { contains: tags[i] }
-            })
+            });
         }
         if (tags.length > 1) {
             tagFilters = {
-                "or": orTags
-            }
+                or: orTags
+            };
         } else {
             tagFilters = orTags[0];
         }
-        newFilter.filter = tagFilters;    
+        newFilter.filter = tagFilters;
     }
     if (checked != null) {
         checkFilters = {
             property: 'Checkbox',
-            checkbox: { equals: checked},
-        }
+            checkbox: { equals: checked }
+        };
         if (newFilter.filter != null) {
             return {
                 filter: {
-                    "and": [
-                        checkFilters,
-                        tagFilters
-                    ]
+                    and: [checkFilters, tagFilters]
                 }
-            }
+            };
         } else {
             newFilter.filter = checkFilters;
         }
@@ -258,40 +269,46 @@ function generateFilter(checked, tags) {
 // Pass in the url of a database and return the data source id for that database
 async function getDataSourceId(url) {
     let data;
-    const mark = url.indexOf('?')
-    const database_id = url.substring(mark - 32, mark)
+    const mark = url.indexOf('?');
+    const database_id = url.substring(mark - 32, mark);
     try {
         const response = await fetch(`https://api.notion.com/v1/databases/${database_id}`, {
             method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${notion_token}`,
-                    'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
-                }
-        })
+            headers: {
+                Authorization: `Bearer ${notion_token}`,
+                'Notion-Version': '2025-09-03',
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
         data = await response.json();
     } catch (error) {
-        console.error("Could not get data source: ", error);
+        console.error('Could not get data source: ', error);
     }
-    return data.data_sources[0].id
+    return data.data_sources[0].id;
 }
 
 // Pass in the url of a notion page and return the database url. Only works with the first database in the page.
 async function getDataBaseId(url) {
     let data;
-    const page_id = url.substring(url.length - 32, url.length)
+    const page_id = url.substring(url.length - 32, url.length);
     try {
         const response = await fetch(`https://api.notion.com/v1/pages/${page_id}`, {
             method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${notion_token}`,
-                    'Notion-Version': '2025-09-03',
-                    'Content-Type': 'application/json',
-                }
-        })
+            headers: {
+                Authorization: `Bearer ${notion_token}`,
+                'Notion-Version': '2025-09-03',
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
         data = await response.json();
     } catch (error) {
-        console.error("Could not get data source: ", error);
+        console.error('Could not get data source: ', error);
     }
     return data.data_sources[0].id;
 }
@@ -300,25 +317,27 @@ async function getDataBaseId(url) {
 async function oneOffJob() {
     let data;
     try {
-        const result = await fetch(`https://api.render.com/v1/services/${process.env.RENDER_SERVICE_ID}/jobs`, {
+        const response = await fetch(`https://api.render.com/v1/services/${process.env.RENDER_SERVICE_ID}/jobs`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${process.env.RENDER_TOKEN}`,
-                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.RENDER_TOKEN}`,
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                startCommand: 'npm run stage' 
+                startCommand: 'npm run stage'
             })
-        })
-        data = await result.json();
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+        data = await response.json();
     } catch (error) {
-        console.error("Failed to trigger one-off job: ", error);
+        console.error('Failed to trigger one-off job: ', error);
     }
     return data;
 }
 
-
-module.exports = { 
+module.exports = {
     getTasks,
     updateTasks,
     updateChecks,
@@ -326,6 +345,6 @@ module.exports = {
     getDayCount,
     generateFilter,
     getDataSourceId,
-    getDataBaseId, 
-    oneOffJob,
- }
+    getDataBaseId,
+    oneOffJob
+};

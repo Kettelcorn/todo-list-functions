@@ -1,18 +1,27 @@
 {
-  "name": "todo-list-functions",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "src/app.js",
-  "scripts": {
-    "test": "node tests/test.js",
-    "dev": "node src/environments/dev.js",
-    "stage": "node src/environments/stage.js",
-    "prod": "node src/environments/prod.js"
-  },
-  "dependencies": {
-    "dotenv": "^17.3.1"
-  }
+    "name": "todo-list-functions",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "",
+    "type": "commonjs",
+    "main": "src/app.js",
+    "scripts": {
+        "test": "node tests/test.js",
+        "dev": "node src/environments/dev.js",
+        "stage": "node src/environments/stage.js",
+        "prod": "node src/environments/prod.js",
+        "format": "prettier --write .",
+        "lint": "eslint . && echo '✅ No ESLint errors!'",
+        "lint:fix": "eslint . --fix"
+    },
+    "dependencies": {
+        "dotenv": "^17.3.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.1.0",
+        "globals": "^17.4.0",
+        "prettier": "^3.8.1"
+    }
 }

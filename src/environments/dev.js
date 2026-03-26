@@ -1,5 +1,5 @@
-const app = require("../app.js");
-const requests = require("../requests.js");
+const app = require('../app.js');
+const requests = require('../requests.js');
 require('dotenv').config();
 
 async function execute() {
@@ -8,8 +8,3 @@ async function execute() {
 }
 
 execute();
-
-
-
-
-
