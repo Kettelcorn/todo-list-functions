@@ -1,6 +1,10 @@
 require('dotenv').config();
 const requests = require('./requests.js');
 
+/**
+ * Main function for excecuting 
+ * @param {string} data_source - data source for specific database 
+ */
 async function main(data_source) {
     let results = {};
     results.uncheck_daily = await uncheckDaily(data_source);
@@ -8,8 +12,12 @@ async function main(data_source) {
     results.trash_checked_backlog = await trashCheckedBacklog(data_source);
     generateFinalMessage(results);
 }
-
-// Unchecks all daily tasks
+ 
+/**
+ * Unchecks all daily tasks
+ * @param {string} data_source - data source for specific database
+ * @returns {Promise<object[]>} - Array of results from unchecking daily tasks
+ */
 async function uncheckDaily(data_source) {
     const dailyFilter = requests.generateFilter(true, ['Daily']);
     const filteredTasks = await requests.getTasks(data_source, dailyFilter);
@@ -17,7 +25,11 @@ async function uncheckDaily(data_source) {
     return results;
 }
 
-// Updates weekly tasks based on number and checkbox
+/**
+ * Updates weekly tasks based on number and checkbox
+ * @param {string} data_source - data source for specific database
+ * @returns {Promise<object[]>} - an array of results containing the numbers updated and boxes unchecked
+ */
 async function updateRecurring(data_source) {
     const recurringFilter = requests.generateFilter(true, [
         'Every other day',

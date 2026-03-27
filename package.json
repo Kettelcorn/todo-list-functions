@@ -7,7 +7,7 @@
     "type": "commonjs",
     "main": "src/app.js",
     "scripts": {
-        "test": "node tests/test.js",
+        "test": "node tests/test.test.js",
         "dev": "node src/environments/dev.js",
         "stage": "node src/environments/stage.js",
         "prod": "node src/environments/prod.js",
@@ -20,8 +20,13 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@types/node": "^25.5.0",
         "eslint": "^10.1.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-jsdoc": "^62.8.1",
+        "eslint-plugin-prettier": "^5.5.5",
         "globals": "^17.4.0",
+        "jsdoc": "^4.0.5",
         "prettier": "^3.8.1"
     }
 }
