@@ -28,7 +28,7 @@ async function uncheckDaily(data_source) {
 /**
  * Updates weekly tasks based on number and checkbox
  * @param {string} data_source - data source for specific database
- * @returns {Promise<object[]>} - an array of results containing the numbers updated and boxes unchecked
+ * @returns {Promise<(object | object[])[]>} - an array of results containing the numbers updated and boxes unchecked
  */
 async function updateRecurring(data_source) {
     const recurringFilter = requests.generateFilter(true, [
