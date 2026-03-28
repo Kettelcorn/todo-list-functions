@@ -113,12 +113,13 @@ async function updateTasks(tasks, params) {
                 throw new Error(`Response status: ${response.status}`);
             }
             data = await response.json();
-            if (tasks[i].properties.Name.title != null) {
+            if (tasks[i].properties.Name.title.length > 0) {
+                console.log(tasks[i].properties.Name.title);
                 console.log(
                     `Updated ${tasks[i].properties.Name.title[0].plain_text}: ${util.inspect(params, false, null, true)} (${i + 1})`
                 );
             } else {
-                console.log(`Updated NAME_NOT_FOUND: ${params}`);
+                console.log(`Updated NAME_NOT_FOUND: ${util.inspect(params, false, null, true)} (${i + 1})`);
             }
         } catch (error) {
             console.error(error);

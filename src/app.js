@@ -7,6 +7,7 @@ const requests = require('./requests.js');
  */
 async function main(data_source) {
     let results = {};
+    results.delete_blanks = await deleteBlanks(data_source);
     results.uncheck_daily = await uncheckDaily(data_source);
     results.update_recurring = await updateRecurring(data_source);
     results.trash_checked_backlog = await trashCheckedBacklog(data_source);
@@ -61,6 +62,25 @@ async function trashCheckedBacklog(data_source) {
 
 /**
  *
+ * @param {string} data_source - data source id to use data base
+ * @returns {object[]} - an array of results from the removed blank tasks
+ */
+async function deleteBlanks(data_source) {
+    const tasks = await requests.getTasks(data_source, {});
+    let blanks = [];
+    for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i].properties.Name.title.length == 0) {
+            blanks.push(tasks[i]);
+        }
+    }
+    const results = await requests.updateTasks(blanks, {
+        in_trash: true
+    });
+    return results;
+}
+
+/**
+ *
  * @param {object[][]} results - an array with 3 arrays with the results from each function
  */
 function generateFinalMessage(results) {
@@ -68,6 +88,7 @@ function generateFinalMessage(results) {
     console.log('------------------------------------');
     console.log('Summary of changes:');
     console.log('------------------------------------');
+    console.log(`Removed ${results.delete_blanks.length} blank tasks`);
     console.log(`Unchecked ${results.uncheck_daily.length} daily tasks`);
     console.log(`Updated numbers for ${results.update_recurring.length - 1} recurring tasks`);
     console.log(`Unchecked ${results.update_recurring[results.update_recurring.length - 1].length} recurring tasks`);
