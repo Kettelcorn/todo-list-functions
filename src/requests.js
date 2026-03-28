@@ -4,7 +4,12 @@ require('dotenv').config();
 const util = require('util');
 const notion_token = process.env.NOTION_TOKEN;
 
-// Gets all tasks with the specific filter applied. Pass in {} for no filters if you want all tasks
+/**
+ * Gets all tasks with the specific filter applied. Pass in {} for no filters if you want all tasks
+ * @param {string} data_source - data source id for database being used
+ * @param {object} filters - filter passed in to specify the tasks to be retrieved
+ * @returns {object[]} - return a list of tasks based on the passed in filter
+ */
 async function getTasks(data_source, filters) {
     let data;
     try {
@@ -35,7 +40,13 @@ async function getTasks(data_source, filters) {
     return tasks;
 }
 
-// If tasks number exceeds 100, request next batch
+/**
+ * If tasks number exceeds 100, request next batch
+ * @param {object} data - pass in json returned from notion to see if there are more tasks
+ * @param {string} data_source - data source id for database being used
+ * @param {object} filters - filter for tasks
+ * @returns {object[]} - return additional tasks past the first 100
+ */
 async function hasMore(data, data_source, filters) {
     if (data.has_more) {
         let tasks = [];
@@ -78,6 +89,12 @@ async function hasMore(data, data_source, filters) {
     }
 }
 
+/**
+ * Update each task based on the given passed in parameter
+ * @param {object[]} tasks - tasks passed in to be updated
+ * @param {object} params - paramaters to determine how to update the tasks
+ * @returns {object[]} - return the results for each updated tasks
+ */
 async function updateTasks(tasks, params) {
     let results = [];
     for (let i = 0; i < tasks.length; i++) {
@@ -111,7 +128,12 @@ async function updateTasks(tasks, params) {
     return results;
 }
 
-// Will either check or uncheck all tasks passed in based on the isChecked value
+/**
+ * Check or uncheck all tasks passed in
+ * @param {object[]} tasks - list of tasks to be unchecked or checked
+ * @param {boolean} isChecked - true if tasks should be checked, false for unchecked
+ * @returns {object[]} - returns the results of updating the checks of each task
+ */
 async function updateChecks(tasks, isChecked) {
     if (isChecked) {
         console.log(`Adding checks to ${tasks.length} tasks`);
@@ -134,7 +156,11 @@ async function updateChecks(tasks, isChecked) {
     return results;
 }
 
-// Updates the number and checkbox values for each weekly tasks
+/**
+ * Updates the number and checkbox values for each weekly tasks
+ * @param {object[]} tasks - list of recurring tasks to be updated
+ * @returns {(object | object[])[]} - return the results of updating all the recurring tasks
+ */
 async function updateRecurring(tasks) {
     let results = [];
     let needsUncheck = [];
@@ -154,7 +180,12 @@ async function updateRecurring(tasks) {
     return results;
 }
 
-// Updates the number value for weekly tasks
+/**
+ * Updates the number value for weekly tasks
+ * @param {object} task - task to have number updated
+ * @param {number} newNumber - new number to assign to task
+ * @returns {object} - return results of number change
+ */
 async function updateNumber(task, newNumber) {
     let data;
     try {
@@ -190,7 +221,11 @@ async function updateNumber(task, newNumber) {
     return data;
 }
 
-// Returns number of days that should be inbetween reseting recurring tasks
+/**
+ * Returns number of days that should be inbetween reseting recurring tasks
+ * @param {object} task - task to see what number should be updated
+ * @returns {(number | null)} - number to update task
+ */
 function getDayCount(task) {
     let number = null;
     for (let i = 0; i < task.properties.Tags.multi_select.length; i++) {
@@ -221,12 +256,18 @@ function getDayCount(task) {
             return number;
         }
     }
+    return number;
 }
 
-//Generate a filter based on passed in parameters:
-//Pass in a list of tags you wish to filter. If the tags variable is passed in a null, no tags should be filtered.
-//Pass in a boolean for checkboxes. If true, filtered for only checked tasks. If false, filter for unchecked tasks. If null, don't
-// filter for checkboxes.
+/**
+ * Generate a filter based on passed in parameters:
+ * Pass in a list of tags you wish to filter. If the tags variable is passed in a null, no tags should be filtered.
+ * Pass in a boolean for checkboxes. If true, filtered for only checked tasks. If false, filter for unchecked tasks. If null, don't
+ * filter for checkboxes.
+ * @param {boolean} checked - if checkboxes for tasks should be checked or not
+ * @param {string[]} tags - array of tags to include in filter
+ * @returns {object} - return the filter to be used by the http request
+ */
 function generateFilter(checked, tags) {
     let tagFilters;
     let checkFilters;
@@ -266,7 +307,11 @@ function generateFilter(checked, tags) {
     return newFilter;
 }
 
-// Pass in the url of a database and return the data source id for that database
+/**
+ * Pass in the url of a database and return the data source id for that database
+ * @param {string} url - url of database
+ * @returns {string} - the data source id of the database
+ */
 async function getDataSourceId(url) {
     let data;
     const mark = url.indexOf('?');
@@ -290,7 +335,11 @@ async function getDataSourceId(url) {
     return data.data_sources[0].id;
 }
 
-// Pass in the url of a notion page and return the database url. Only works with the first database in the page.
+/**
+ * Pass in the url of a notion page and return the database url. Only works with the first database in the page.
+ * @param {string} url - url of the notion page
+ * @returns {string} - database id for the page passed in
+ */
 async function getDataBaseId(url) {
     let data;
     const page_id = url.substring(url.length - 32, url.length);
@@ -313,7 +362,10 @@ async function getDataBaseId(url) {
     return data.data_sources[0].id;
 }
 
-// Manually triggers a run of the cron job in the staging environment
+/**
+ * Manually triggers a run of the cron job in the staging environment
+ * @returns {object} - the results of the cron trigger
+ */
 async function oneOffJob() {
     let data;
     try {

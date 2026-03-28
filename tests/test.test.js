@@ -110,6 +110,11 @@ test('main test', async (t) => {
 });
 
 // Checks to see if only daily tasks are only unchecked and not other tasks
+/**
+ *
+ * @param {object[]} tasks - list of tasks to check if they have been unchecked
+ * @returns {boolean} - return if all are unchecked
+ */
 function allUnchecked(tasks) {
     for (let i = 0; i < tasks.length; i++) {
         if (tasks[i].properties.Checkbox.checkbox) {

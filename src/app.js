@@ -2,8 +2,8 @@ require('dotenv').config();
 const requests = require('./requests.js');
 
 /**
- * Main function for excecuting 
- * @param {string} data_source - data source for specific database 
+ * Main function for excecuting
+ * @param {string} data_source - data source for specific database
  */
 async function main(data_source) {
     let results = {};
@@ -12,7 +12,7 @@ async function main(data_source) {
     results.trash_checked_backlog = await trashCheckedBacklog(data_source);
     generateFinalMessage(results);
 }
- 
+
 /**
  * Unchecks all daily tasks
  * @param {string} data_source - data source for specific database
@@ -45,6 +45,11 @@ async function updateRecurring(data_source) {
     return complete;
 }
 
+/**
+ *
+ * @param {string} data_source - data source to use
+ * @returns {Promise<object[]>} - return array of results from removed backlog tasks
+ */
 async function trashCheckedBacklog(data_source) {
     const backlogFilter = requests.generateFilter(true, ['Backlog']);
     const checkedBacklog = await requests.getTasks(data_source, backlogFilter);
@@ -54,6 +59,10 @@ async function trashCheckedBacklog(data_source) {
     return results;
 }
 
+/**
+ *
+ * @param {object[][]} results - an array with 3 arrays with the results from each function
+ */
 function generateFinalMessage(results) {
     console.log('');
     console.log('------------------------------------');

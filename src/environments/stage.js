@@ -2,6 +2,9 @@ const app = require('../app.js');
 const requests = require('../requests.js');
 require('dotenv').config();
 
+/**
+ * Run for staging environment
+ */
 async function execute() {
     if (process.env.NODE_ENV == 'local') {
         requests.oneOffJob();
