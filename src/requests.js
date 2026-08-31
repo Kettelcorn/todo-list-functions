@@ -12,6 +12,7 @@ const notion_token = process.env.NOTION_TOKEN;
  */
 async function getTasks(data_source, filters) {
     let data;
+    console.log(data_source);
     try {
         const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
             method: 'POST',
