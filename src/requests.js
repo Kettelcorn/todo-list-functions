@@ -22,6 +22,7 @@ async function getTasks(data_source, filters) {
             },
             body: JSON.stringify(filters)
         });
+        console.log(response);
         if (!response.ok) {
             throw new Error(`Response status: ${response.status}`);
         }
