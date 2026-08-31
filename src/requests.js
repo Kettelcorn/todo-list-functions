@@ -17,7 +17,7 @@ async function getTasks(data_source, filters) {
         const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
             method: 'POST',
             headers: {
-                Authorization: `${notion_token}`,
+                Authorization: `Bearer ${notion_token}`,
                 'Notion-Version': '2025-09-03',
                 'Content-Type': 'application/json'
             },
@@ -60,7 +60,7 @@ async function hasMore(data, data_source, filters) {
                 const response = await fetch(`https://api.notion.com/v1/data_sources/${data_source}/query`, {
                     method: 'POST',
                     headers: {
-                        Authorization: `${notion_token}`,
+                        Authorization: `Bearer ${notion_token}`,
                         'Notion-Version': '2025-09-03',
                         'Content-Type': 'application/json'
                     },
